@@ -1,19 +1,26 @@
-const tintColorLight = '#2f95dc';
-const tintColorDark = '#fff';
+/**
+ * Crezo color palette — Obsidian Flux design system
+ * Re-exports from theme for backward compatibility
+ */
 
+import { colors } from './theme';
+
+// Legacy export for existing components
 export default {
   light: {
-    text: '#000',
-    background: '#fff',
-    tint: tintColorLight,
-    tabIconDefault: '#ccc',
-    tabIconSelected: tintColorLight,
+    text: colors.on_surface,
+    background: colors.surface,
+    tint: colors.primary,
+    tabIconDefault: colors.tertiary_fixed_dim,
+    tabIconSelected: colors.primary,
   },
   dark: {
-    text: '#fff',
-    background: '#000',
-    tint: tintColorDark,
-    tabIconDefault: '#ccc',
-    tabIconSelected: tintColorDark,
+    text: colors.on_surface,
+    background: colors.surface,
+    tint: colors.primary,
+    tabIconDefault: colors.tertiary_fixed_dim,
+    tabIconSelected: colors.primary,
   },
 };
+
+export { colors };

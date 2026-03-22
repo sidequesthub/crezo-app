@@ -6,11 +6,11 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "crezoapp",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#131313"
     },
     "ios": {
       "supportsTablet": true
@@ -30,7 +30,14 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Crezo needs access to organize your content into deal albums visible in CapCut, WhatsApp, and Gallery.",
+          "savePhotosPermission": "Crezo creates native albums on your device to organize media by deal."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
