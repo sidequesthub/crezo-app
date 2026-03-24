@@ -4,127 +4,91 @@ The all-in-one business operating system for Indian content creators. Content pl
 
 ## Phase 1 MVP Features
 
-- **Content Calendar** — Monthly/weekly view, content slots, deal tagging, drag reschedule
-- **Brand Deal Manager** — Kanban pipeline (Pitched → Paid), deliverables checklist, revenue dashboard
-- **Invoicing & Payments** — GST support, ₹ INR native, UPI/bank details, PDF export
-- **Asset Vault** — Native album approach (zero cloud storage), MediaLibrary API, deal-linked organization
-- **Creator Profile / Media Kit** — Shareable link, PDF export
+- **Content Calendar** — Monthly/weekly view, content slots, deal tagging
+- **Brand Deal Manager** — Kanban pipeline (Pitched → Paid), deliverables checklist
+- **Invoicing & Payments** — GST support, ₹ INR native
+- **Asset Vault** — Native album approach (zero cloud storage), MediaLibrary API
+- **Creator Profile / Media Kit** — Shareable link
 
-## Tech Stack
+## Tech Stack (MVP)
 
-- **Frontend:** Expo (React Native) — iOS, Android, iPad, Web
-- **Design:** Obsidian Flux / Digital Atelier (dark, tonal layering)
-- **Database:** PostgreSQL (host on Raspberry Pi or cloud)
-- **API:** Node.js/Express (deploy to Vercel or standalone)
+- **App:** Expo (React Native) — iOS, Android, iPad, Web
+- **Backend:** [Supabase](https://supabase.com) — PostgreSQL, Auth, Row Level Security
+- **Web hosting:** [Vercel](https://vercel.com) — static export of the Expo web build
+- **Design:** Obsidian Flux / Digital Atelier
 
-## Getting Started
+Without Supabase env vars, the app runs with **demo mock data** (no login required).
 
-### Prerequisites
-
-- Node.js 18+
-- npm or yarn
-
-### Run the app
+## Quick start
 
 ```bash
-# Install dependencies
 npm install
-
-# Start Expo (iOS / Android / Web)
 npm start
-
-# Or run specific platforms
-npm run ios
-npm run android
-npm run web
 ```
 
-### Set up the database (Docker)
+- **Web:** `npm run web`
+- **iOS / Android:** `npm run ios` / `npm run android`
+
+## Supabase setup (recommended for MVP)
+
+1. Create a project at [supabase.com](https://supabase.com) (free tier).
+2. In **Project Settings → API**, copy **Project URL** and **anon public** key.
+3. Copy `.env.example` to `.env` and set:
+
+   ```
+   EXPO_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+   ```
+
+4. In **SQL Editor**, run the migration in `supabase/migrations/20250101000000_initial.sql` (creates tables, RLS, and a trigger to insert `public.creators` on signup).
+
+5. In **Authentication → Providers**, enable **Email** (password). Optionally confirm email is off for faster testing.
+
+6. Restart Expo. You’ll get email/password sign-in; data is stored per user with RLS.
+
+If the `auth.users` trigger fails to run in your project, create the `creators` row manually once per user or adjust the SQL per [Supabase docs](https://supabase.com/docs/guides/auth/managing-user-data).
+
+## Deploy web to Vercel
+
+1. Connect the repo to Vercel.
+2. Set environment variables **for Production** (and Preview if needed):
+
+   - `EXPO_PUBLIC_SUPABASE_URL`
+   - `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+
+3. Build settings (or use the included `vercel.json`):
+
+   - **Install:** `npm ci`
+   - **Build:** `npm run build:web`
+   - **Output directory:** `dist`
+
+4. Deploy. The Expo web bundle is static; the app talks to Supabase directly from the browser.
+
+## Optional: local PostgreSQL (Docker)
 
 ```bash
-# Start PostgreSQL
 docker-compose up -d
-
-# Verify it's running
-docker-compose ps
 ```
 
-The schema is applied automatically on first run. Connection string:
+Use `database/schema.sql` if you self-host Postgres instead of Supabase. The app’s primary path is Supabase; the Express API in `api/` is optional.
 
-```
-postgresql://crezo:crezo@localhost:5432/crezo
-```
-
-For a custom install (e.g. Raspberry Pi):
-
-1. Run the schema: `psql -U postgres -d crezo < database/schema.sql`
-2. Set `DATABASE_URL` when running the API
-
-### Run the API
-
-```bash
-cd api
-npm install
-DATABASE_URL=postgresql://... npm start
-```
-
-For local development without a DB, the app uses mock data automatically.
-
-### Environment variables
-
-Create `.env` in the project root:
-
-```
-EXPO_PUBLIC_API_URL=http://localhost:3001/api
-```
-
-For production, point this to your deployed API URL.
-
-## Deployment
-
-### App (Vercel)
-
-```bash
-# Build for web
-npx expo export --platform web
-
-# Deploy the output to Vercel
-```
-
-### API (Vercel Serverless)
-
-The `api/` folder can be adapted for Vercel serverless functions. Each route becomes a `api/*.js` function.
-
-### Database (Raspberry Pi)
-
-1. Install PostgreSQL on the Pi
-2. Create database: `createdb crezo`
-3. Run `database/schema.sql`
-4. Configure `DATABASE_URL` with your Pi's IP (e.g. `postgresql://user:pass@192.168.1.x:5432/crezo`)
-
-## Project Structure
+## Project structure
 
 ```
 crezo-app/
-├── app/                 # Expo Router screens
-│   ├── (tabs)/          # Tab navigation (Home, Calendar, Deals, etc.)
-│   ├── deal/[id].tsx    # Deal detail
-│   ├── content/[id].tsx # Content slot detail
-│   └── invoice/[id].tsx # Invoice detail
-├── components/          # Reusable UI
-│   ├── ui/              # Design system components
-│   └── layout/          # AppHeader, etc.
-├── constants/           # Theme, colors (Obsidian Flux)
-├── lib/                 # API client, mock data
-├── types/               # TypeScript types
-├── database/            # PostgreSQL schema
-├── api/                 # Express API server
-└── assets/
+├── app/                    # Expo Router (tabs, auth, modals)
+├── contexts/               # Auth (Supabase session)
+├── components/             # UI + layout
+├── hooks/                  # useCreatorData, etc.
+├── lib/                    # Supabase client, queries, mock data
+├── supabase/migrations/    # SQL for Supabase
+├── database/               # Standalone Postgres schema (optional)
+└── api/                    # Optional Express API
 ```
 
-## Design System
+## Design system
 
-Obsidian Flux — deep nocturnal base (#131313), Electric Blue primary (#adc6ff), Warm Orange accents (#fe9400). Tonal layering, no borders, glassmorphism for floating elements. Typography: Plus Jakarta Sans (headlines), Manrope (body).
+Obsidian Flux — base `#131313`, primary `#adc6ff`, accent `#fe9400`. Plus Jakarta Sans + Manrope.
 
 ## License
 

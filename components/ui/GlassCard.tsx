@@ -3,7 +3,6 @@
  * surface_container_high with outline_variant (10% opacity) and primary glow
  */
 
-import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 
 import { borderRadius, colors } from '@/constants/theme';

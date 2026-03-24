@@ -2,16 +2,21 @@
  * Creator Profile / Media Kit — Shareable public page
  */
 
-import { ScrollView, StyleSheet, Text, View, Linking } from 'react-native';
+import { router } from 'expo-router';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AppHeader } from '@/components/layout/AppHeader';
 import { Button } from '@/components/ui';
 import { colors, typography } from '@/constants/theme';
-import { mockCreator } from '@/lib/mock-data';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCreatorData } from '@/hooks/useCreatorData';
 
 export default function ProfileScreen() {
-  const mediaKitUrl = mockCreator.media_kit_url
-    ? `https://${mockCreator.media_kit_url}`
+  const { signOut, supabaseConfigured } = useAuth();
+  const { creator } = useCreatorData();
+  const display = creator;
+  const mediaKitUrl = display?.media_kit_url
+    ? `https://${display.media_kit_url}`
     : null;
 
   return (
@@ -27,13 +32,9 @@ export default function ProfileScreen() {
       >
         <View style={styles.profileCard}>
           <View style={styles.avatar} />
-          <Text style={styles.creatorName}>{mockCreator.name}</Text>
-          {mockCreator.niche && (
-            <Text style={styles.niche}>{mockCreator.niche}</Text>
-          )}
-          {mockCreator.bio && (
-            <Text style={styles.bio}>{mockCreator.bio}</Text>
-          )}
+          <Text style={styles.creatorName}>{display?.name ?? 'Creator'}</Text>
+          {display?.niche && <Text style={styles.niche}>{display.niche}</Text>}
+          {display?.bio && <Text style={styles.bio}>{display.bio}</Text>}
         </View>
 
         <View style={styles.section}>
@@ -57,13 +58,11 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Profile Details</Text>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Email</Text>
-            <Text style={styles.detailValue}>{mockCreator.email}</Text>
+            <Text style={styles.detailValue}>{display?.email ?? ''}</Text>
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Contact</Text>
-            <Text style={styles.detailValue}>
-              {mockCreator.phone || 'Not set'}
-            </Text>
+            <Text style={styles.detailValue}>{display?.phone || 'Not set'}</Text>
           </View>
         </View>
 
@@ -86,6 +85,17 @@ export default function ProfileScreen() {
           </Text>
           <Button title="Generate PDF" onPress={() => {}} variant="primary" />
         </View>
+
+        {supabaseConfigured && (
+          <Button
+            title="Sign out"
+            onPress={async () => {
+              await signOut();
+              router.replace('/(auth)/login' as never);
+            }}
+            variant="secondary"
+          />
+        )}
       </ScrollView>
     </View>
   );

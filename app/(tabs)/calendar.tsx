@@ -14,7 +14,7 @@ import {
 import { AppHeader } from '@/components/layout/AppHeader';
 import { Button } from '@/components/ui';
 import { colors, spacing, typography } from '@/constants/theme';
-import { mockContentSlots } from '@/lib/mock-data';
+import { useCreatorData } from '@/hooks/useCreatorData';
 import type { ContentPlatform, ContentStatus } from '@/types';
 
 const PLATFORM_LABELS: Record<ContentPlatform, string> = {
@@ -35,6 +35,7 @@ const STATUS_COLORS: Record<ContentStatus, string> = {
 };
 
 export default function CalendarScreen() {
+  const { contentSlots } = useCreatorData();
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [selectedDate, setSelectedDate] = useState('2026-03-22');
 
@@ -43,9 +44,7 @@ export default function CalendarScreen() {
     return d.toISOString().slice(0, 10);
   });
 
-  const slotsForWeek = mockContentSlots.filter((s) =>
-    weekDates.includes(s.scheduled_date)
-  );
+  const slotsForWeek = contentSlots.filter((s) => weekDates.includes(s.scheduled_date));
 
   return (
     <View style={styles.container}>

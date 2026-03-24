@@ -8,7 +8,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { Button, CurrencyDisplay, GlassCard } from '@/components/ui';
 import { colors, typography } from '@/constants/theme';
-import { mockDeals } from '@/lib/mock-data';
+import { useCreatorData } from '@/hooks/useCreatorData';
 import type { DealStatus } from '@/types';
 
 const STATUS_LABELS: Record<DealStatus, string> = {
@@ -30,12 +30,11 @@ const STATUS_COLORS: Record<DealStatus, string> = {
 };
 
 export default function DealsScreen() {
-  const monthEarned = mockDeals
+  const { deals } = useCreatorData();
+  const monthEarned = deals
     .filter((d) => d.status === 'paid')
     .reduce((sum, d) => sum + d.value_inr, 0);
-  const pendingDeals = mockDeals.filter(
-    (d) => !['delivered', 'paid'].includes(d.status)
-  );
+  const pendingDeals = deals.filter((d) => !['delivered', 'paid'].includes(d.status));
 
   return (
     <View style={styles.container}>
@@ -112,7 +111,7 @@ export default function DealsScreen() {
 
         <View style={styles.listSection}>
           <Text style={styles.sectionTitle}>All Deals</Text>
-          {mockDeals.map((deal) => (
+          {deals.map((deal) => (
             <Link key={deal.id} href={`/deal/${deal.id}`} asChild>
               <View style={styles.dealRow}>
                 <View style={styles.dealRowLeft}>

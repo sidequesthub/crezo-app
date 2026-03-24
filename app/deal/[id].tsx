@@ -3,11 +3,12 @@ import { ScrollView, StyleSheet, Text, View, Linking } from 'react-native';
 
 import { CurrencyDisplay } from '@/components/ui';
 import { colors, typography } from '@/constants/theme';
-import { mockDeals } from '@/lib/mock-data';
+import { useCreatorData } from '@/hooks/useCreatorData';
 
 export default function DealDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const deal = mockDeals.find((d) => d.id === id);
+  const { deals } = useCreatorData();
+  const deal = deals.find((d) => d.id === id);
 
   if (!deal) {
     return (

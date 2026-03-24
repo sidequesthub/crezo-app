@@ -6,10 +6,9 @@ import { Link } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AppHeader } from '@/components/layout/AppHeader';
-import { CurrencyDisplay } from '@/components/ui';
-import { Button } from '@/components/ui/Button';
+import { Button, CurrencyDisplay } from '@/components/ui';
 import { colors, typography } from '@/constants/theme';
-import { mockDeals, mockInvoices } from '@/lib/mock-data';
+import { useCreatorData } from '@/hooks/useCreatorData';
 import type { InvoiceStatus } from '@/types';
 
 const STATUS_LABELS: Record<InvoiceStatus, string> = {
@@ -27,10 +26,11 @@ const STATUS_COLORS: Record<InvoiceStatus, string> = {
 };
 
 export default function InvoicesScreen() {
-  const totalEarned = mockInvoices
+  const { invoices, deals } = useCreatorData();
+  const totalEarned = invoices
     .filter((i) => i.status === 'paid')
     .reduce((sum, i) => sum + i.total, 0);
-  const pendingAmount = mockInvoices
+  const pendingAmount = invoices
     .filter((i) => !['paid', 'draft'].includes(i.status))
     .reduce((sum, i) => sum + i.total, 0);
 
@@ -69,8 +69,8 @@ export default function InvoicesScreen() {
           <Button title="New Invoice" onPress={() => {}} variant="primary" />
         </View>
 
-        {mockInvoices.map((inv) => {
-          const deal = mockDeals.find((d) => d.id === inv.deal_id);
+        {invoices.map((inv) => {
+          const deal = deals.find((d) => d.id === inv.deal_id);
           return (
             <Link key={inv.id} href={`/invoice/${inv.id}`} asChild>
               <View style={styles.invoiceCard}>

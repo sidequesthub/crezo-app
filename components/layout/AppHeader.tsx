@@ -57,8 +57,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 16,
     backgroundColor: 'rgba(19, 19, 19, 0.6)',
-    // @ts-expect-error - backdrop blur exists
-    backdropFilter: 'blur(20px)',
   },
   left: {
     flexDirection: 'row',

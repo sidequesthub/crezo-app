@@ -43,7 +43,7 @@ export default function TabLayout() {
         options={{
           title: 'Deals',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="handshake-outline" size={size} color={color} />
+            <Ionicons name="briefcase-outline" size={size} color={color} />
           ),
         }}
       />

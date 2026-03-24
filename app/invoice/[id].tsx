@@ -4,12 +4,13 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CurrencyDisplay } from '@/components/ui';
 import { Button } from '@/components/ui';
 import { colors, typography } from '@/constants/theme';
-import { mockDeals, mockInvoices } from '@/lib/mock-data';
+import { useCreatorData } from '@/hooks/useCreatorData';
 
 export default function InvoiceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const invoice = mockInvoices.find((i) => i.id === id);
-  const deal = invoice ? mockDeals.find((d) => d.id === invoice.deal_id) : null;
+  const { invoices, deals } = useCreatorData();
+  const invoice = invoices.find((i) => i.id === id);
+  const deal = invoice ? deals.find((d) => d.id === invoice.deal_id) : null;
 
   if (!invoice) {
     return (

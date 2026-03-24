@@ -16,15 +16,12 @@ import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
+import { AuthProvider } from '@/contexts/AuthContext';
 import { colors } from '@/constants/theme';
 
 export { ErrorBoundary } from 'expo-router';
 
 SplashScreen.preventAutoHideAsync();
-
-export const unstable_settings = {
-  initialRouteName: '(tabs)',
-};
 
 export default function RootLayout() {
   const [manropeLoaded, manropeError] = useFonts({
@@ -53,16 +50,14 @@ export default function RootLayout() {
   if (!loaded) return null;
 
   return (
-    <>
+    <AuthProvider>
       <StatusBar style="light" backgroundColor={colors.surface} />
       <Stack
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: colors.surface },
         }}
-      >
-        <Stack.Screen name="(tabs)" />
-      </Stack>
-    </>
+      />
+    </AuthProvider>
   );
 }

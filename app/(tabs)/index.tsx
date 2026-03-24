@@ -3,14 +3,13 @@
  */
 
 import { Link } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AppHeader } from '@/components/layout/AppHeader';
 import { CurrencyDisplay, GlassCard } from '@/components/ui';
 import { colors, spacing, typography } from '@/constants/theme';
-import { mockContentSlots, mockCreator, mockDeals } from '@/lib/mock-data';
+import { useCreatorData } from '@/hooks/useCreatorData';
 
-const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const mockWeekData = [
   { day: 18, label: 'Mon', active: false },
   { day: 19, label: 'Tue', active: false },
@@ -22,20 +21,29 @@ const mockWeekData = [
 ];
 
 export default function HomeScreen() {
-  const monthlyRevenue = mockDeals
-    .filter((d) => d.status === 'paid')
-    .reduce((sum, d) => sum + d.value_inr, 0) || 240000;
-  const activeDeals = mockDeals.filter(
-    (d) => !['delivered', 'paid'].includes(d.status)
-  ).length;
-  const postsThisWeek = mockContentSlots.filter((s) => s.status === 'posted')
-    .length || 5;
+  const { creator, contentSlots, deals, loading } = useCreatorData();
+
+  const monthlyRevenue =
+    deals.filter((d) => d.status === 'paid').reduce((sum, d) => sum + d.value_inr, 0) || 240000;
+  const activeDeals = deals.filter((d) => !['delivered', 'paid'].includes(d.status)).length;
+  const postsThisWeek =
+    contentSlots.filter((s) => s.status === 'posted').length || (deals.length > 0 ? 5 : 0);
+
+  const displayName = creator?.name ?? 'Creator';
+
+  if (loading && !creator) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <AppHeader
         subtitle="Welcome back,"
-        title={`Hey ${mockCreator.name} 👋`}
+        title={`Hey ${displayName} 👋`}
       />
       <ScrollView
         style={styles.scroll}
@@ -109,7 +117,7 @@ export default function HomeScreen() {
               <Text style={styles.sectionLink}>Add</Text>
             </Link>
           </View>
-          {mockContentSlots.slice(0, 3).map((slot) => (
+          {contentSlots.slice(0, 3).map((slot) => (
             <Link key={slot.id} href={`/content/${slot.id}`} asChild>
               <View style={styles.contentCard}>
                 <View style={styles.contentCardLeft}>
@@ -134,6 +142,10 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   container: {
     flex: 1,
     backgroundColor: colors.surface,

@@ -2,11 +2,12 @@ import { useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { colors, typography } from '@/constants/theme';
-import { mockContentSlots } from '@/lib/mock-data';
+import { useCreatorData } from '@/hooks/useCreatorData';
 
 export default function ContentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const slot = mockContentSlots.find((s) => s.id === id);
+  const { contentSlots } = useCreatorData();
+  const slot = contentSlots.find((s) => s.id === id);
 
   if (!slot) {
     return (

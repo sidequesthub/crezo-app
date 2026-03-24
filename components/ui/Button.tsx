@@ -100,8 +100,8 @@ const styles = StyleSheet.create({
     color: colors.on_surface,
   },
   tertiary: {
-    paddingVertical: spacing.2,
-    paddingHorizontal: spacing.3,
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[3],
     alignItems: 'center',
   },
   tertiaryText: {
