@@ -165,9 +165,10 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   scrollContentWide: {
-    maxWidth: 640,
+    maxWidth: 800,
     alignSelf: 'center',
     width: '100%',
+    paddingHorizontal: 40,
   },
   profileCard: {
     alignItems: 'center',

@@ -45,10 +45,12 @@ export default function HomeScreen() {
   const monthlyRevenue = deals
     .filter((d) => {
       if (d.status !== 'paid') return false;
-      if (!d.end_date) return true;
-      const paid = new Date(d.end_date + 'T00:00:00');
-      return paid.getMonth() === curMonth && paid.getFullYear() === curYear;
+      const paidAt = new Date(d.updated_at);
+      return paidAt.getMonth() === curMonth && paidAt.getFullYear() === curYear;
     })
+    .reduce((sum, d) => sum + d.value_inr, 0);
+  const totalRevenue = deals
+    .filter((d) => d.status === 'paid')
     .reduce((sum, d) => sum + d.value_inr, 0);
   const activeDeals = deals.filter(
     (d) => !['delivered', 'paid'].includes(d.status)
@@ -85,13 +87,29 @@ export default function HomeScreen() {
       >
         <View style={[styles.statsRow, isWide && styles.statsRowWide]}>
           <GlassCard style={isWide ? styles.statCardWide : styles.statCard}>
-            <Text style={styles.statLabel}>Monthly Revenue</Text>
+            <Text style={styles.statLabel}>This Month</Text>
             {monthlyRevenue > 0 ? (
               <CurrencyDisplay
                 amount={
                   monthlyRevenue >= 100000
                     ? `${(monthlyRevenue / 100000).toFixed(1)}L`
                     : monthlyRevenue
+                }
+                size="lg"
+                variant="primary"
+              />
+            ) : (
+              <Text style={styles.statZero}>₹0</Text>
+            )}
+          </GlassCard>
+          <GlassCard style={isWide ? styles.statCardWide : styles.statCard}>
+            <Text style={styles.statLabel}>Total Revenue</Text>
+            {totalRevenue > 0 ? (
+              <CurrencyDisplay
+                amount={
+                  totalRevenue >= 100000
+                    ? `${(totalRevenue / 100000).toFixed(1)}L`
+                    : totalRevenue
                 }
                 size="lg"
                 variant="primary"
@@ -122,11 +140,7 @@ export default function HomeScreen() {
               <Text style={styles.sectionLink}>View Calendar</Text>
             </View>
           </Link>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.weekScroll}
-          >
+          <View style={styles.weekRow}>
             {weekData.map((d) => {
               const hasContent = contentSlots.some(
                 (s) => s.scheduled_date === d.date
@@ -145,7 +159,7 @@ export default function HomeScreen() {
                 </View>
               );
             })}
-          </ScrollView>
+          </View>
         </View>
 
         <View style={styles.section}>
@@ -211,9 +225,10 @@ const styles = StyleSheet.create({
     gap: 32,
   },
   scrollContentWide: {
-    maxWidth: 960,
+    maxWidth: 1200,
     alignSelf: 'center',
     width: '100%',
+    paddingHorizontal: 40,
   },
   statsRow: {
     flexDirection: 'row',
@@ -271,16 +286,16 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
   },
-  weekScroll: {
+  weekRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
     paddingVertical: 4,
   },
   dayCard: {
-    minWidth: 70,
+    flex: 1,
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
+    paddingVertical: 14,
+    borderRadius: 14,
     backgroundColor: colors.surface_container_high,
     borderWidth: 1,
     borderColor: 'rgba(65, 71, 85, 0.1)',

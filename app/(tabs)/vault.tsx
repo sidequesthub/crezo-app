@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 24, paddingBottom: 120 },
-  scrollContentWide: { maxWidth: 960, alignSelf: 'center', width: '100%' },
+  scrollContentWide: { maxWidth: 1200, alignSelf: 'center', width: '100%', paddingHorizontal: 40 },
   permissionView: {
     flex: 1,
     padding: 24,

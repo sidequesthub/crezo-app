@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 
 import { AppHeader } from '@/components/layout/AppHeader';
-import { Button } from '@/components/ui';
 import { colors, typography } from '@/constants/theme';
 import { useCreatorData } from '@/hooks/useCreatorData';
 import type { ContentPlatform, ContentSlot, ContentStatus } from '@/types';
@@ -216,51 +215,63 @@ export default function CalendarScreen() {
         contentContainerStyle={StyleSheet.flatten([styles.scrollContent, isWide && styles.scrollContentWide])}
         showsVerticalScrollIndicator={false}
       >
-        {/* Toolbar */}
-        <View style={styles.toolbar}>
-          <View style={styles.viewToggle}>
-            {(['day', 'week', 'month'] as ViewMode[]).map((mode) => (
-              <Pressable
-                key={mode}
-                    style={StyleSheet.flatten([styles.toggleBtn, viewMode === mode && styles.toggleBtnActive])}
-                onPress={() => setViewMode(mode)}
-              >
-                <Text style={StyleSheet.flatten([styles.toggleText, viewMode === mode && styles.toggleTextActive])}>
-                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                </Text>
-              </Pressable>
-            ))}
+        {/* Toolbar: title + nav arrows on left, view toggle on right */}
+        <View style={styles.toolbarRow}>
+          <View style={styles.navTitleRow}>
+            <Text style={styles.navTitle}>
+              {viewMode === 'day' ? dayLabel
+                : viewMode === 'week' ? weekLabel
+                : monthLabel}
+            </Text>
+            <Pressable
+              onPress={() => {
+                if (viewMode === 'day') setDayOffset((o) => o - 1);
+                else if (viewMode === 'week') setWeekOffset((o) => o - 1);
+                else prevMonth();
+              }}
+              hitSlop={8}
+            >
+              <Ionicons name="chevron-back" size={18} color={colors.on_surface_variant} />
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                if (viewMode === 'day') setDayOffset((o) => o + 1);
+                else if (viewMode === 'week') setWeekOffset((o) => o + 1);
+                else nextMonth();
+              }}
+              hitSlop={8}
+            >
+              <Ionicons name="chevron-forward" size={18} color={colors.on_surface_variant} />
+            </Pressable>
           </View>
-          <Link href="/add-content" asChild>
-            <Button title="Schedule Content" onPress={() => {}} variant="primary" />
-          </Link>
+          <View style={styles.toolbarRight}>
+            <View style={styles.viewToggle}>
+              {(['month', 'week', 'day'] as ViewMode[]).map((mode) => (
+                <Pressable
+                  key={mode}
+                  style={StyleSheet.flatten([styles.toggleBtn, viewMode === mode && styles.toggleBtnActive])}
+                  onPress={() => setViewMode(mode)}
+                >
+                  <Text style={StyleSheet.flatten([styles.toggleText, viewMode === mode && styles.toggleTextActive])}>
+                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            {isWide && (
+              <Link href="/add-content" asChild>
+                <Pressable style={styles.scheduleBtn}>
+                  <Ionicons name="add" size={18} color={colors.on_primary} />
+                  <Text style={styles.scheduleBtnText}>Schedule Content</Text>
+                </Pressable>
+              </Link>
+            )}
+          </View>
         </View>
-
-        {/* Today shortcut */}
-        <Pressable
-          style={styles.todayBtn}
-          onPress={() => {
-            if (viewMode === 'day') setDayOffset(0);
-            else if (viewMode === 'week') { setWeekOffset(0); setSelectedDate(todayStr); }
-            else setMonthYear({ year: today.getFullYear(), month: today.getMonth() });
-          }}
-        >
-          <Ionicons name="today-outline" size={14} color={colors.primary} />
-          <Text style={styles.todayBtnText}>Today</Text>
-        </Pressable>
 
         {/* DAY VIEW */}
         {viewMode === 'day' && (
           <>
-            <View style={styles.navRow}>
-              <Pressable onPress={() => setDayOffset((o) => o - 1)}>
-                <Ionicons name="chevron-back" size={22} color={colors.on_surface} />
-              </Pressable>
-              <Text style={styles.navLabel}>{dayLabel}</Text>
-              <Pressable onPress={() => setDayOffset((o) => o + 1)}>
-                <Ionicons name="chevron-forward" size={22} color={colors.on_surface} />
-              </Pressable>
-            </View>
 
             {/* All-day / unscheduled slots */}
             {slotsWithoutTime.length > 0 && (
@@ -294,9 +305,7 @@ export default function CalendarScreen() {
               <View style={styles.emptyState}>
                 <Ionicons name="document-text-outline" size={28} color={colors.on_surface_variant} />
                 <Text style={styles.emptyText}>No content scheduled</Text>
-                <Link href="/add-content" asChild>
-                  <Button title="Schedule Content" onPress={() => {}} variant="tertiary" />
-                </Link>
+                <Text style={styles.emptyHint}>Tap + to schedule</Text>
               </View>
             )}
           </>
@@ -305,16 +314,6 @@ export default function CalendarScreen() {
         {/* WEEK VIEW */}
         {viewMode === 'week' && (
           <>
-            <View style={styles.navRow}>
-              <Pressable onPress={() => setWeekOffset((o) => o - 1)}>
-                <Ionicons name="chevron-back" size={22} color={colors.on_surface} />
-              </Pressable>
-              <Text style={styles.navLabel}>{weekLabel}</Text>
-              <Pressable onPress={() => setWeekOffset((o) => o + 1)}>
-                <Ionicons name="chevron-forward" size={22} color={colors.on_surface} />
-              </Pressable>
-            </View>
-
             <View style={styles.weekHeader}>
               {weekDates.map((date) => {
                 const d = new Date(date);
@@ -362,9 +361,7 @@ export default function CalendarScreen() {
                 <View style={styles.emptyState}>
                   <Ionicons name="document-text-outline" size={28} color={colors.on_surface_variant} />
                   <Text style={styles.emptyText}>No content scheduled</Text>
-                  <Link href="/add-content" asChild>
-                    <Button title="Schedule Content" onPress={() => {}} variant="tertiary" />
-                  </Link>
+                  <Text style={styles.emptyHint}>Tap + to schedule</Text>
                 </View>
               ) : (
                 [...slotsForDay]
@@ -380,16 +377,6 @@ export default function CalendarScreen() {
         {/* MONTH VIEW */}
         {viewMode === 'month' && (
           <>
-            <View style={styles.navRow}>
-              <Pressable onPress={prevMonth}>
-                <Ionicons name="chevron-back" size={22} color={colors.on_surface} />
-              </Pressable>
-              <Text style={styles.navLabel}>{monthLabel}</Text>
-              <Pressable onPress={nextMonth}>
-                <Ionicons name="chevron-forward" size={22} color={colors.on_surface} />
-              </Pressable>
-            </View>
-
             <View style={styles.monthDayLabels}>
               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
                 <Text key={d} style={styles.monthDayLabel}>{d}</Text>
@@ -449,9 +436,7 @@ export default function CalendarScreen() {
                 <View style={styles.emptyState}>
                   <Ionicons name="document-text-outline" size={28} color={colors.on_surface_variant} />
                   <Text style={styles.emptyText}>No content scheduled</Text>
-                  <Link href="/add-content" asChild>
-                    <Button title="Schedule Content" onPress={() => {}} variant="tertiary" />
-                  </Link>
+                  <Text style={styles.emptyHint}>Tap + to schedule</Text>
                 </View>
               ) : (
                 [...slotsForDay]
@@ -464,6 +449,14 @@ export default function CalendarScreen() {
           </>
         )}
       </ScrollView>
+
+      {!isWide && (
+        <Link href="/add-content" asChild>
+          <Pressable style={styles.fab}>
+            <Ionicons name="add" size={28} color={colors.on_primary} />
+          </Pressable>
+        </Link>
+      )}
     </View>
   );
 }
@@ -472,13 +465,60 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 24, paddingBottom: 120 },
-  scrollContentWide: { maxWidth: 960, alignSelf: 'center', width: '100%' },
+  scrollContentWide: { maxWidth: 1200, alignSelf: 'center', width: '100%', paddingHorizontal: 40 },
 
-  toolbar: {
+  toolbarRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 20,
+  },
+  navTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  navTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: colors.on_surface,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    marginRight: 2,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 28,
+    right: 28,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  toolbarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  scheduleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.primary,
+    paddingVertical: 9,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+  },
+  scheduleBtnText: {
+    ...typography.label_md,
+    color: colors.on_primary,
+    fontWeight: '700',
   },
   viewToggle: {
     flexDirection: 'row',
@@ -487,37 +527,15 @@ const styles = StyleSheet.create({
     padding: 3,
   },
   toggleBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
     borderRadius: 8,
   },
   toggleBtnActive: {
-    backgroundColor: colors.primary + '25',
+    backgroundColor: colors.surface_container_high,
   },
   toggleText: { ...typography.label_md, color: colors.on_surface_variant },
-  toggleTextActive: { color: colors.primary, fontWeight: '700' },
-
-  todayBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'center',
-    gap: 4,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    backgroundColor: colors.primary + '15',
-    marginBottom: 12,
-  },
-  todayBtnText: { ...typography.label_sm, color: colors.primary },
-
-  navRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    marginBottom: 16,
-  },
-  navLabel: { ...typography.label_lg, color: colors.on_surface },
+  toggleTextActive: { color: colors.on_surface, fontWeight: '700' },
 
   // Week view
   weekHeader: {
@@ -659,6 +677,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   emptyText: { ...typography.body_md, color: colors.on_surface_variant },
+  emptyHint: { ...typography.label_sm, color: colors.outline, marginTop: 4 },
 
   // Slot card
   slotCard: {

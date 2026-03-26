@@ -178,9 +178,10 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   scrollContentWide: {
-    maxWidth: 960,
+    maxWidth: 1000,
     alignSelf: 'center',
     width: '100%',
+    paddingHorizontal: 40,
   },
   summaryRow: {
     flexDirection: 'row',
