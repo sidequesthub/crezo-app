@@ -15,11 +15,7 @@ export default function Index() {
     );
   }
 
-  if (!supabaseConfigured) {
-    return <Redirect href="/(tabs)" />;
-  }
-
-  if (!session) {
+  if (!supabaseConfigured || !session) {
     return <Redirect href={'/(auth)/login' as never} />;
   }
 

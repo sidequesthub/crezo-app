@@ -1,9 +1,13 @@
-/**
- * Brand Deal Manager — Kanban pipeline, deal cards
- */
-
+import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 
 import { AppHeader } from '@/components/layout/AppHeader';
 import { Button, CurrencyDisplay, GlassCard } from '@/components/ui';
@@ -31,30 +35,61 @@ const STATUS_COLORS: Record<DealStatus, string> = {
 
 export default function DealsScreen() {
   const { deals } = useCreatorData();
+  const { width } = useWindowDimensions();
+  const isWide = width >= 768;
+
+  const currentMonth = useMemo(
+    () =>
+      new Date().toLocaleDateString('en-IN', {
+        month: 'long',
+        year: 'numeric',
+      }),
+    []
+  );
+
+  const now = new Date();
+  const currentMonthIdx = now.getMonth();
+  const currentYear = now.getFullYear();
+
   const monthEarned = deals
-    .filter((d) => d.status === 'paid')
+    .filter((d) => {
+      if (d.status !== 'paid') return false;
+      if (!d.end_date) return true;
+      const paid = new Date(d.end_date);
+      return paid.getMonth() === currentMonthIdx && paid.getFullYear() === currentYear;
+    })
     .reduce((sum, d) => sum + d.value_inr, 0);
-  const pendingDeals = deals.filter((d) => !['delivered', 'paid'].includes(d.status));
+  const pendingDeals = deals.filter(
+    (d) => !['delivered', 'paid'].includes(d.status)
+  );
 
   return (
     <View style={styles.container}>
-      <AppHeader
-        title="My Deals"
-        subtitle="Manage your brand pipeline"
-      />
+      <AppHeader title="My Deals" subtitle="Manage your brand pipeline" />
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={StyleSheet.flatten([
+          styles.scrollContent,
+          isWide && styles.scrollContentWide,
+        ])}
         showsVerticalScrollIndicator={false}
       >
         <GlassCard style={styles.revenueBar}>
           <View style={styles.revenueRow}>
-            <Text style={styles.revenueLabel}>March:</Text>
-            <CurrencyDisplay
-              amount={monthEarned >= 100000 ? `${monthEarned / 100000}L` : monthEarned}
-              size="md"
-              variant="primary"
-            />
+            <Text style={styles.revenueLabel}>{currentMonth}:</Text>
+            {monthEarned > 0 ? (
+              <CurrencyDisplay
+                amount={
+                  monthEarned >= 100000
+                    ? `${(monthEarned / 100000).toFixed(1)}L`
+                    : monthEarned
+                }
+                size="md"
+                variant="primary"
+              />
+            ) : (
+              <Text style={styles.revenueZero}>₹0</Text>
+            )}
             <Text style={styles.revenueSuffix}>earned</Text>
           </View>
         </GlassCard>
@@ -66,80 +101,116 @@ export default function DealsScreen() {
           </Link>
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.kanbanScroll}
-        >
-          {(['pitched', 'negotiating', 'confirmed', 'in_progress', 'delivered', 'paid'] as const).map(
-            (status) => {
-              const columnDeals = pendingDeals.filter((d) => d.status === status);
-              return (
-                <View key={status} style={styles.column}>
-                  <View style={styles.columnHeader}>
-                    <View
-                      style={[
-                        styles.columnDot,
-                        { backgroundColor: STATUS_COLORS[status] },
-                      ]}
-                    />
-                    <Text style={styles.columnTitle}>
-                      {STATUS_LABELS[status]}
-                    </Text>
-                    <Text style={styles.columnCount}>{columnDeals.length}</Text>
+        {deals.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Ionicons
+              name="briefcase-outline"
+              size={36}
+              color={colors.on_surface_variant}
+            />
+            <Text style={styles.emptyTitle}>No deals yet</Text>
+            <Text style={styles.emptyText}>
+              Add your first brand deal to start tracking your pipeline
+            </Text>
+          </View>
+        ) : (
+          <>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.kanbanScroll}
+            >
+              {(
+                [
+                  'pitched',
+                  'negotiating',
+                  'confirmed',
+                  'in_progress',
+                  'delivered',
+                  'paid',
+                ] as const
+              ).map((status) => {
+                const columnDeals = deals.filter(
+                  (d) => d.status === status
+                );
+                return (
+                  <View key={status} style={styles.column}>
+                    <View style={styles.columnHeader}>
+                      <View
+                        style={[
+                          styles.columnDot,
+                          { backgroundColor: STATUS_COLORS[status] },
+                        ]}
+                      />
+                      <Text style={styles.columnTitle}>
+                        {STATUS_LABELS[status]}
+                      </Text>
+                      <Text style={styles.columnCount}>
+                        {columnDeals.length}
+                      </Text>
+                    </View>
+                    {columnDeals.map((deal) => (
+                      <Link
+                        key={deal.id}
+                        href={`/deal/${deal.id}`}
+                        asChild
+                      >
+                        <View style={styles.dealCard}>
+                          <Text style={styles.dealTitle}>{deal.title}</Text>
+                          <Text style={styles.dealBrand}>
+                            {deal.brand?.name || '—'}
+                          </Text>
+                          <CurrencyDisplay
+                            amount={deal.value_inr}
+                            size="sm"
+                            variant="primary"
+                          />
+                        </View>
+                      </Link>
+                    ))}
                   </View>
-                  {columnDeals.map((deal) => (
-                    <Link key={deal.id} href={`/deal/${deal.id}`} asChild>
-                      <View style={styles.dealCard}>
-                        <Text style={styles.dealTitle}>{deal.title}</Text>
-                        <Text style={styles.dealBrand}>
-                          {deal.brand?.name || 'Unknown'}
-                        </Text>
-                        <CurrencyDisplay
-                          amount={deal.value_inr}
-                          size="sm"
-                          variant="primary"
-                        />
-                      </View>
-                    </Link>
-                  ))}
-                </View>
-              );
-            }
-          )}
-        </ScrollView>
+                );
+              })}
+            </ScrollView>
 
-        <View style={styles.listSection}>
-          <Text style={styles.sectionTitle}>All Deals</Text>
-          {deals.map((deal) => (
-            <Link key={deal.id} href={`/deal/${deal.id}`} asChild>
-              <View style={styles.dealRow}>
-                <View style={styles.dealRowLeft}>
-                  <Text style={styles.dealRowTitle}>{deal.title}</Text>
-                  <Text style={styles.dealRowBrand}>{deal.brand?.name}</Text>
-                </View>
-                <View style={styles.dealRowRight}>
-                  <CurrencyDisplay amount={deal.value_inr} size="sm" />
-                  <View
-                    style={[
-                      styles.statusChip,
-                      { backgroundColor: STATUS_COLORS[deal.status] + '30' },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.statusChipText,
-                        { color: STATUS_COLORS[deal.status] },
-                      ]}
-                    >
-                      {STATUS_LABELS[deal.status]}
-                    </Text>
+            <View style={styles.listSection}>
+              <Text style={styles.sectionTitle}>All Deals</Text>
+              {deals.map((deal) => (
+                <Link key={deal.id} href={`/deal/${deal.id}`} asChild>
+                  <View style={styles.dealRow}>
+                    <View style={styles.dealRowLeft}>
+                      <Text style={styles.dealRowTitle}>{deal.title}</Text>
+                      <Text style={styles.dealRowBrand}>
+                        {deal.brand?.name}
+                      </Text>
+                    </View>
+                    <View style={styles.dealRowRight}>
+                      <CurrencyDisplay amount={deal.value_inr} size="sm" />
+                      <View
+                        style={[
+                          styles.statusChip,
+                          {
+                            backgroundColor:
+                              STATUS_COLORS[deal.status] + '30',
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.statusChipText,
+                            { color: STATUS_COLORS[deal.status] },
+                          ]}
+                        >
+                          {STATUS_LABELS[deal.status]}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                </View>
-              </View>
-            </Link>
-          ))}
-        </View>
+                </Link>
+              ))}
+            </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -157,6 +228,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 120,
   },
+  scrollContentWide: {
+    maxWidth: 960,
+    alignSelf: 'center',
+    width: '100%',
+  },
   revenueBar: {
     marginBottom: 24,
   },
@@ -167,6 +243,10 @@ const styles = StyleSheet.create({
   },
   revenueLabel: {
     ...typography.body_md,
+    color: colors.on_surface_variant,
+  },
+  revenueZero: {
+    ...typography.headline_md,
     color: colors.on_surface_variant,
   },
   revenueSuffix: {
@@ -183,6 +263,22 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...typography.headline_md,
     color: colors.on_surface,
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: 48,
+    gap: 12,
+    backgroundColor: colors.surface_container_low,
+    borderRadius: 16,
+  },
+  emptyTitle: {
+    ...typography.headline_sm,
+    color: colors.on_surface,
+  },
+  emptyText: {
+    ...typography.body_sm,
+    color: colors.on_surface_variant,
+    textAlign: 'center',
   },
   kanbanScroll: {
     flexDirection: 'row',

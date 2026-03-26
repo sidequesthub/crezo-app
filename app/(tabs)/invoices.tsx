@@ -1,9 +1,12 @@
-/**
- * Invoicing & Payments — India-first, GST support
- */
-
+import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 
 import { AppHeader } from '@/components/layout/AppHeader';
 import { Button, CurrencyDisplay } from '@/components/ui';
@@ -27,6 +30,9 @@ const STATUS_COLORS: Record<InvoiceStatus, string> = {
 
 export default function InvoicesScreen() {
   const { invoices, deals } = useCreatorData();
+  const { width } = useWindowDimensions();
+  const isWide = width >= 768;
+
   const totalEarned = invoices
     .filter((i) => i.status === 'paid')
     .reduce((sum, i) => sum + i.total, 0);
@@ -36,82 +42,124 @@ export default function InvoicesScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader
-        title="Invoices"
-        subtitle="India-first invoicing"
-      />
+      <AppHeader title="Invoices" subtitle="India-first invoicing" />
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={StyleSheet.flatten([
+          styles.scrollContent,
+          isWide && styles.scrollContentWide,
+        ])}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.summaryRow}>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>Total Earned</Text>
-            <CurrencyDisplay
-              amount={totalEarned >= 100000 ? `${totalEarned / 100000}L` : totalEarned}
-              size="lg"
-              variant="primary"
-            />
+            {totalEarned > 0 ? (
+              <CurrencyDisplay
+                amount={
+                  totalEarned >= 100000
+                    ? `${(totalEarned / 100000).toFixed(1)}L`
+                    : totalEarned
+                }
+                size="lg"
+                variant="primary"
+              />
+            ) : (
+              <Text style={styles.summaryZero}>₹0</Text>
+            )}
           </View>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>Pending</Text>
-            <CurrencyDisplay
-              amount={pendingAmount >= 100000 ? `${pendingAmount / 100000}L` : pendingAmount}
-              size="lg"
-              variant="secondary"
-            />
+            {pendingAmount > 0 ? (
+              <CurrencyDisplay
+                amount={
+                  pendingAmount >= 100000
+                    ? `${(pendingAmount / 100000).toFixed(1)}L`
+                    : pendingAmount
+                }
+                size="lg"
+                variant="secondary"
+              />
+            ) : (
+              <Text style={styles.summaryZero}>₹0</Text>
+            )}
           </View>
         </View>
 
         <View style={styles.toolbar}>
           <Text style={styles.sectionTitle}>All Invoices</Text>
-          <Button title="New Invoice" onPress={() => {}} variant="primary" />
+          <Link href={'/add-invoice' as never} asChild>
+            <Button title="New Invoice" onPress={() => {}} variant="primary" />
+          </Link>
         </View>
 
-        {invoices.map((inv) => {
-          const deal = deals.find((d) => d.id === inv.deal_id);
-          return (
-            <Link key={inv.id} href={`/invoice/${inv.id}`} asChild>
-              <View style={styles.invoiceCard}>
-                <View style={styles.invoiceHeader}>
-                  <Text style={styles.invoiceTitle}>
-                    {deal?.title || 'Invoice'}
-                  </Text>
-                  <View
-                    style={[
-                      styles.statusChip,
-                      { backgroundColor: STATUS_COLORS[inv.status] + '30' },
-                    ]}
-                  >
-                    <Text
+        {invoices.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Ionicons
+              name="receipt-outline"
+              size={36}
+              color={colors.on_surface_variant}
+            />
+            <Text style={styles.emptyTitle}>No invoices yet</Text>
+            <Text style={styles.emptyText}>
+              Create an invoice from a deal to start tracking payments
+            </Text>
+          </View>
+        ) : (
+          invoices.map((inv) => {
+            const deal = deals.find((d) => d.id === inv.deal_id);
+            return (
+              <Link key={inv.id} href={`/invoice/${inv.id}`} asChild>
+                <View style={styles.invoiceCard}>
+                  <View style={styles.invoiceHeader}>
+                    <Text style={styles.invoiceTitle}>
+                      {deal?.title || 'Invoice'}
+                    </Text>
+                    <View
                       style={[
-                        styles.statusChipText,
-                        { color: STATUS_COLORS[inv.status] },
+                        styles.statusChip,
+                        {
+                          backgroundColor:
+                            STATUS_COLORS[inv.status] + '30',
+                        },
                       ]}
                     >
-                      {STATUS_LABELS[inv.status]}
-                    </Text>
+                      <Text
+                        style={[
+                          styles.statusChipText,
+                          { color: STATUS_COLORS[inv.status] },
+                        ]}
+                      >
+                        {STATUS_LABELS[inv.status]}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-                <Text style={styles.invoiceBrand}>{deal?.brand?.name}</Text>
-                <View style={styles.invoiceAmount}>
-                  <CurrencyDisplay amount={inv.total} size="md" variant="primary" />
-                  {inv.gst_amount > 0 && (
-                    <Text style={styles.gstNote}>
-                      incl. ₹{inv.gst_amount.toLocaleString('en-IN')} GST
+                  <Text style={styles.invoiceBrand}>
+                    {deal?.brand?.name}
+                  </Text>
+                  <View style={styles.invoiceAmount}>
+                    <CurrencyDisplay
+                      amount={inv.total}
+                      size="md"
+                      variant="primary"
+                    />
+                    {inv.gst_amount > 0 && (
+                      <Text style={styles.gstNote}>
+                        incl. ₹{inv.gst_amount.toLocaleString('en-IN')} GST
+                      </Text>
+                    )}
+                  </View>
+                  {inv.sent_date && (
+                    <Text style={styles.sentDate}>
+                      Sent{' '}
+                      {new Date(inv.sent_date).toLocaleDateString('en-IN')}
                     </Text>
                   )}
                 </View>
-                {inv.sent_date && (
-                  <Text style={styles.sentDate}>
-                    Sent {new Date(inv.sent_date).toLocaleDateString('en-IN')}
-                  </Text>
-                )}
-              </View>
-            </Link>
-          );
-        })}
+              </Link>
+            );
+          })
+        )}
       </ScrollView>
     </View>
   );
@@ -128,6 +176,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 24,
     paddingBottom: 120,
+  },
+  scrollContentWide: {
+    maxWidth: 960,
+    alignSelf: 'center',
+    width: '100%',
   },
   summaryRow: {
     flexDirection: 'row',
@@ -147,6 +200,10 @@ const styles = StyleSheet.create({
     color: colors.on_surface_variant,
     marginBottom: 8,
   },
+  summaryZero: {
+    ...typography.display_sm,
+    color: colors.on_surface_variant,
+  },
   toolbar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -156,6 +213,22 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...typography.headline_md,
     color: colors.on_surface,
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: 48,
+    gap: 12,
+    backgroundColor: colors.surface_container_low,
+    borderRadius: 16,
+  },
+  emptyTitle: {
+    ...typography.headline_sm,
+    color: colors.on_surface,
+  },
+  emptyText: {
+    ...typography.body_sm,
+    color: colors.on_surface_variant,
+    textAlign: 'center',
   },
   invoiceCard: {
     backgroundColor: colors.surface_container_low,

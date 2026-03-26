@@ -1,33 +1,66 @@
-/**
- * Home Dashboard — Daily-use hook, Creator Glass Widgets
- */
-
+import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 
 import { AppHeader } from '@/components/layout/AppHeader';
 import { CurrencyDisplay, GlassCard } from '@/components/ui';
-import { colors, spacing, typography } from '@/constants/theme';
+import { colors, typography } from '@/constants/theme';
 import { useCreatorData } from '@/hooks/useCreatorData';
 
-const mockWeekData = [
-  { day: 18, label: 'Mon', active: false },
-  { day: 19, label: 'Tue', active: false },
-  { day: 20, label: 'Wed', active: false },
-  { day: 21, label: 'Thu', active: false },
-  { day: 22, label: 'Fri', active: true },
-  { day: 23, label: 'Sat', active: false },
-  { day: 24, label: 'Sun', active: false },
-];
+function getCurrentWeek() {
+  const now = new Date();
+  const day = now.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now);
+    d.setDate(now.getDate() + mondayOffset + i);
+    return {
+      date: d.toISOString().slice(0, 10),
+      day: d.getDate(),
+      label: d.toLocaleDateString('en', { weekday: 'short' }),
+      isToday: d.toDateString() === now.toDateString(),
+    };
+  });
+}
 
 export default function HomeScreen() {
   const { creator, contentSlots, deals, loading } = useCreatorData();
+  const { width } = useWindowDimensions();
+  const isWide = width >= 768;
 
-  const monthlyRevenue =
-    deals.filter((d) => d.status === 'paid').reduce((sum, d) => sum + d.value_inr, 0) || 240000;
-  const activeDeals = deals.filter((d) => !['delivered', 'paid'].includes(d.status)).length;
-  const postsThisWeek =
-    contentSlots.filter((s) => s.status === 'posted').length || (deals.length > 0 ? 5 : 0);
+  const weekData = useMemo(() => getCurrentWeek(), []);
+  const weekDates = weekData.map((d) => d.date);
+
+  const now = new Date();
+  const curMonth = now.getMonth();
+  const curYear = now.getFullYear();
+  const monthlyRevenue = deals
+    .filter((d) => {
+      if (d.status !== 'paid') return false;
+      if (!d.end_date) return true;
+      const paid = new Date(d.end_date + 'T00:00:00');
+      return paid.getMonth() === curMonth && paid.getFullYear() === curYear;
+    })
+    .reduce((sum, d) => sum + d.value_inr, 0);
+  const activeDeals = deals.filter(
+    (d) => !['delivered', 'paid'].includes(d.status)
+  ).length;
+  const postsThisWeek = contentSlots.filter((s) => {
+    return s.status === 'posted' && weekDates.includes(s.scheduled_date);
+  }).length;
+
+  const upcomingSlots = contentSlots
+    .filter((s) => s.scheduled_date >= new Date().toISOString().slice(0, 10))
+    .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date))
+    .slice(0, 5);
 
   const displayName = creator?.name ?? 'Creator';
 
@@ -41,39 +74,39 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader
-        subtitle="Welcome back,"
-        title={`Hey ${displayName} 👋`}
-      />
+      <AppHeader subtitle="Welcome back," title={`Hey ${displayName}`} />
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={StyleSheet.flatten([
+          styles.scrollContent,
+          isWide && styles.scrollContentWide,
+        ])}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.statsRow}>
-          <GlassCard style={styles.statCard}>
+        <View style={[styles.statsRow, isWide && styles.statsRowWide]}>
+          <GlassCard style={isWide ? styles.statCardWide : styles.statCard}>
             <Text style={styles.statLabel}>Monthly Revenue</Text>
-            <CurrencyDisplay
-              amount={monthlyRevenue >= 100000 ? `${monthlyRevenue / 100000}L` : monthlyRevenue}
-              size="lg"
-              variant="primary"
-            />
-            <View style={styles.statFooter}>
-              <Text style={styles.statFooterText}>12% from last month</Text>
-            </View>
+            {monthlyRevenue > 0 ? (
+              <CurrencyDisplay
+                amount={
+                  monthlyRevenue >= 100000
+                    ? `${(monthlyRevenue / 100000).toFixed(1)}L`
+                    : monthlyRevenue
+                }
+                size="lg"
+                variant="primary"
+              />
+            ) : (
+              <Text style={styles.statZero}>₹0</Text>
+            )}
           </GlassCard>
-          <GlassCard style={styles.statCard}>
+          <GlassCard style={isWide ? styles.statCardWide : styles.statCard}>
             <Text style={styles.statLabel}>Active Deals</Text>
             <Text style={[styles.statValue, { color: colors.secondary }]}>
               {activeDeals}
             </Text>
-            <View style={styles.statFooter}>
-              <Text style={[styles.statFooterText, { color: colors.secondary }]}>
-                High priority pipeline
-              </Text>
-            </View>
           </GlassCard>
-          <GlassCard style={styles.statCard}>
+          <GlassCard style={isWide ? styles.statCardWide : styles.statCard}>
             <Text style={styles.statLabel}>Content Velocity</Text>
             <Text style={styles.statValue}>{postsThisWeek}</Text>
             <View style={styles.statFooter}>
@@ -94,19 +127,24 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.weekScroll}
           >
-            {mockWeekData.map((d) => (
-              <View
-                key={d.day}
-                style={[
-                  styles.dayCard,
-                  d.active && styles.dayCardActive,
-                ]}
-              >
-                <Text style={styles.dayLabel}>{d.label}</Text>
-                <Text style={styles.dayNumber}>{d.day}</Text>
-                {d.active && <View style={styles.dayDot} />}
-              </View>
-            ))}
+            {weekData.map((d) => {
+              const hasContent = contentSlots.some(
+                (s) => s.scheduled_date === d.date
+              );
+              return (
+                <View
+                  key={d.date}
+                  style={[
+                    styles.dayCard,
+                    d.isToday && styles.dayCardActive,
+                  ]}
+                >
+                  <Text style={styles.dayLabel}>{d.label}</Text>
+                  <Text style={styles.dayNumber}>{d.day}</Text>
+                  {hasContent && <View style={styles.dayDot} />}
+                </View>
+              );
+            })}
           </ScrollView>
         </View>
 
@@ -114,27 +152,41 @@ export default function HomeScreen() {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Upcoming Content</Text>
             <Link href="/add-content" asChild>
-              <Text style={styles.sectionLink}>Add</Text>
+              <Text style={styles.sectionLink}>Schedule</Text>
             </Link>
           </View>
-          {contentSlots.slice(0, 3).map((slot) => (
-            <Link key={slot.id} href={`/content/${slot.id}`} asChild>
-              <View style={styles.contentCard}>
-                <View style={styles.contentCardLeft}>
-                  <Text style={styles.contentTitle}>{slot.title}</Text>
-                  <Text style={styles.contentMeta}>
-                    {slot.platform.replace('_', ' ')} • {slot.status}
+          {upcomingSlots.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons
+                name="calendar-outline"
+                size={32}
+                color={colors.on_surface_variant}
+              />
+              <Text style={styles.emptyTitle}>No upcoming content</Text>
+              <Text style={styles.emptyText}>
+                Schedule content to see it here
+              </Text>
+            </View>
+          ) : (
+            upcomingSlots.map((slot) => (
+              <Link key={slot.id} href={`/content/${slot.id}`} asChild>
+                <View style={styles.contentCard}>
+                  <View style={styles.contentCardLeft}>
+                    <Text style={styles.contentTitle}>{slot.title}</Text>
+                    <Text style={styles.contentMeta}>
+                      {slot.platform.replace('_', ' ')} · {slot.status}
+                    </Text>
+                  </View>
+                  <Text style={styles.contentDate}>
+                    {new Date(slot.scheduled_date).toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                    })}
                   </Text>
                 </View>
-                <Text style={styles.contentDate}>
-                  {new Date(slot.scheduled_date).toLocaleDateString('en-IN', {
-                    day: 'numeric',
-                    month: 'short',
-                  })}
-                </Text>
-              </View>
-            </Link>
-          ))}
+              </Link>
+            ))
+          )}
         </View>
       </ScrollView>
     </View>
@@ -158,14 +210,25 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
     gap: 32,
   },
+  scrollContentWide: {
+    maxWidth: 960,
+    alignSelf: 'center',
+    width: '100%',
+  },
   statsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
   },
+  statsRowWide: {
+    flexWrap: 'nowrap',
+  },
   statCard: {
     flex: 1,
     minWidth: '45%',
+  },
+  statCardWide: {
+    flex: 1,
   },
   statLabel: {
     ...typography.label_sm,
@@ -175,6 +238,10 @@ const styles = StyleSheet.create({
   statValue: {
     ...typography.display_sm,
     color: colors.on_surface,
+  },
+  statZero: {
+    ...typography.display_sm,
+    color: colors.on_surface_variant,
   },
   statFooter: {
     marginTop: 16,
@@ -237,6 +304,22 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: colors.primary,
     marginTop: 8,
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: 40,
+    gap: 12,
+    backgroundColor: colors.surface_container_low,
+    borderRadius: 16,
+  },
+  emptyTitle: {
+    ...typography.headline_sm,
+    color: colors.on_surface,
+  },
+  emptyText: {
+    ...typography.body_sm,
+    color: colors.on_surface_variant,
+    textAlign: 'center',
   },
   contentCard: {
     flexDirection: 'row',

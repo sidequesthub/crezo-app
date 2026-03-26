@@ -1,8 +1,8 @@
 import type { Session, User } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createURL } from 'expo-linking';
 
-import { getSupabase } from '@/lib/supabase';
-import { isSupabaseConfigured } from '@/lib/supabase-config';
+import { auth } from '@/services';
 
 type AuthContextValue = {
   session: Session | null;
@@ -11,6 +11,9 @@ type AuthContextValue = {
   supabaseConfigured: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
+  sendOtp: (phone: string) => Promise<{ error: Error | null }>;
+  verifyOtp: (phone: string, token: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 };
 
@@ -19,7 +22,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const configured = isSupabaseConfigured();
+  const configured = auth.isConfigured();
 
   useEffect(() => {
     if (!configured) {
@@ -27,45 +30,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const supabase = getSupabase();
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
-
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
+    auth.getSession().then((s) => {
+      setSession(s as Session | null);
       setLoading(false);
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
+    const { unsubscribe } = auth.onAuthStateChange((_event, s) => {
+      setSession(s as Session | null);
     });
 
-    return () => subscription.unsubscribe();
+    return unsubscribe;
   }, [configured]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const supabase = getSupabase();
-    if (!supabase) return { error: new Error('Supabase not configured') };
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error ? new Error(error.message) : null };
+  const signIn = useCallback(
+    (email: string, password: string) => auth.signIn(email, password),
+    []
+  );
+  const signUp = useCallback(
+    (email: string, password: string) => auth.signUp(email, password),
+    []
+  );
+  const signInWithGoogle = useCallback(async () => {
+    return auth.signInWithGoogle(createURL('/(tabs)'));
   }, []);
-
-  const signUp = useCallback(async (email: string, password: string) => {
-    const supabase = getSupabase();
-    if (!supabase) return { error: new Error('Supabase not configured') };
-    const { error } = await supabase.auth.signUp({ email, password });
-    return { error: error ? new Error(error.message) : null };
-  }, []);
-
-  const signOut = useCallback(async () => {
-    const supabase = getSupabase();
-    if (!supabase) return;
-    await supabase.auth.signOut();
-  }, []);
+  const sendOtp = useCallback((phone: string) => auth.sendOtp(phone), []);
+  const verifyOtp = useCallback(
+    (phone: string, token: string) => auth.verifyOtp(phone, token),
+    []
+  );
+  const signOut = useCallback(() => auth.signOut(), []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -75,9 +68,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       supabaseConfigured: configured,
       signIn,
       signUp,
+      signInWithGoogle,
+      sendOtp,
+      verifyOtp,
       signOut,
     }),
-    [session, loading, configured, signIn, signUp, signOut]
+    [session, loading, configured, signIn, signUp, signInWithGoogle, sendOtp, verifyOtp, signOut]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

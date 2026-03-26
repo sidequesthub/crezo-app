@@ -27,7 +27,8 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "basePath": "/app"
     },
     "plugins": [
       "expo-router",
@@ -37,7 +38,9 @@
           "photosPermission": "Crezo needs access to organize your content into deal albums visible in CapCut, WhatsApp, and Gallery.",
           "savePhotosPermission": "Crezo creates native albums on your device to organize media by deal."
         }
-      ]
+      ],
+      "expo-sharing",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true

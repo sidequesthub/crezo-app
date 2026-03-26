@@ -1,12 +1,9 @@
-/**
- * Glass nav bar — Obsidian Flux design
- */
-
-import { Image } from 'react-native';
-import { StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Image, Platform, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, typography } from '@/constants/theme';
+import { useCreatorData } from '@/hooks/useCreatorData';
 
 interface AppHeaderProps {
   title?: string;
@@ -16,35 +13,44 @@ interface AppHeaderProps {
 
 export function AppHeader({ title, subtitle, showLogo = true }: AppHeaderProps) {
   const insets = useSafeAreaInsets();
+  const { creator } = useCreatorData();
+  const { width } = useWindowDimensions();
+  const isWideWeb = Platform.OS === 'web' && width >= 768;
+  const avatarUrl = creator?.avatar_url;
 
   return (
     <View
       style={[
         styles.container,
         {
-          paddingTop: insets.top + 12,
+          paddingTop: isWideWeb ? 24 : insets.top + 12,
         },
       ]}
     >
       <View style={styles.left}>
         <View style={styles.avatar}>
-          <Image
-            source={{ uri: 'https://i.pravatar.cc/100' }}
-            style={styles.avatarImage}
-          />
+          {avatarUrl ? (
+            <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+          ) : (
+            <View style={styles.avatarFallback}>
+              <Ionicons
+                name="person"
+                size={18}
+                color={colors.on_surface_variant}
+              />
+            </View>
+          )}
         </View>
         <View>
-          {subtitle && (
-            <Text style={styles.subtitle}>{subtitle}</Text>
-          )}
-          {title && (
-            <Text style={styles.title}>{title}</Text>
-          )}
+          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+          {title && <Text style={styles.title}>{title}</Text>}
         </View>
       </View>
-      <View style={styles.right}>
-        <Text style={styles.logo}>Crezo</Text>
-      </View>
+      {showLogo && !isWideWeb && (
+        <View style={styles.right}>
+          <Text style={styles.logo}>Crezo</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -75,6 +81,12 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  avatarFallback: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface_container_high,
+  },
   subtitle: {
     ...typography.label_sm,
     color: colors.on_surface_variant,
@@ -91,8 +103,7 @@ const styles = StyleSheet.create({
   logo: {
     fontFamily: 'PlusJakartaSans_800ExtraBold',
     fontSize: 24,
-    fontStyle: 'italic',
-    letterSpacing: -0.5,
-    color: colors.primary,
+    letterSpacing: -1,
+    color: colors.on_surface,
   },
 });

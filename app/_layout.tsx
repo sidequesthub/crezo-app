@@ -16,8 +16,12 @@ import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
+import { TamaguiProvider } from '@tamagui/core';
+
 import { AuthProvider } from '@/contexts/AuthContext';
+import { CreatorDataProvider } from '@/contexts/CreatorDataContext';
 import { colors } from '@/constants/theme';
+import { tamaguiConfig } from '@/constants/tamagui.config';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -50,14 +54,18 @@ export default function RootLayout() {
   if (!loaded) return null;
 
   return (
-    <AuthProvider>
-      <StatusBar style="light" backgroundColor={colors.surface} />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.surface },
-        }}
-      />
-    </AuthProvider>
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+      <AuthProvider>
+        <CreatorDataProvider>
+          <StatusBar style="light" backgroundColor={colors.surface} />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.surface },
+            }}
+          />
+        </CreatorDataProvider>
+      </AuthProvider>
+    </TamaguiProvider>
   );
 }

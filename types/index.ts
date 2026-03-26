@@ -14,6 +14,7 @@ export interface ContentSlot {
   type: string;
   status: ContentStatus;
   scheduled_date: string;
+  scheduled_time: string | null;
   deal_id: string | null;
   notes: string | null;
   created_at: string;
@@ -45,7 +46,7 @@ export interface Brand {
 export interface Deal {
   id: string;
   creator_id: string;
-  brand_id: string;
+  brand_id: string | null;
   title: string;
   value_inr: number;
   status: DealStatus;
@@ -77,9 +78,10 @@ export type InvoiceStatus = 'draft' | 'sent' | 'acknowledged' | 'paid';
 
 export interface Invoice {
   id: string;
+  invoice_number: number;
   deal_id: string;
   creator_id: string;
-  brand_id: string;
+  brand_id: string | null;
   amount: number;
   gst_amount: number;
   total: number;
@@ -116,9 +118,13 @@ export interface Creator {
   email: string;
   phone: string | null;
   gst_number: string | null;
+  pan_number: string | null;
   upi_id: string | null;
-  bank_details: string | null;
+  bank_account_number: string | null;
+  bank_ifsc: string | null;
+  bank_name: string | null;
   media_kit_url: string | null;
+  avatar_url: string | null;
   bio: string | null;
   niche: string | null;
   created_at: string;
