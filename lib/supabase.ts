@@ -1,34 +1,18 @@
+import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 
-import { isSupabaseConfigured, supabaseAnonKey, supabaseUrl } from '@/lib/supabase-config';
+const SUPABASE_URL = 'https://mvhpxaewcsnkkgryyfve.supabase.co';
+const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12aHB4YWV3Y3Nua2tncnl5ZnZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNjYyMzEsImV4cCI6MjA4OTk0MjIzMX0.EX9HVdodRFSUdCNMqlH5qxOFtC45vSPpcC8LBsNPMaU';
 
-const storage = {
-  getItem: (key: string) => AsyncStorage.getItem(key),
-  setItem: (key: string, value: string) => AsyncStorage.setItem(key, value),
-  removeItem: (key: string) => AsyncStorage.removeItem(key),
-};
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    storage: AsyncStorage,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
+});
 
-export function createSupabaseClient() {
-  if (!isSupabaseConfigured() || !supabaseUrl || !supabaseAnonKey) {
-    return null;
-  }
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      storage,
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: typeof window !== 'undefined',
-      flowType: 'pkce',
-    },
-  });
-}
-
-let client: ReturnType<typeof createSupabaseClient> | null = null;
-
-export function getSupabase() {
-  if (!client && isSupabaseConfigured()) {
-    client = createSupabaseClient();
-  }
-  return client;
-}
+export const BACKEND_URL = 'https://crezo-app.vercel.app';

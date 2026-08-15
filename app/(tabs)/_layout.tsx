@@ -1,212 +1,167 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { Platform, useWindowDimensions, View, Text, Pressable, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Colors } from '@/constants/Colors';
 
-import { colors } from '@/constants/theme';
+type IconSpec =
+  | { set: 'ion'; name: React.ComponentProps<typeof Ionicons>['name'] }
+  | { set: 'mci'; name: React.ComponentProps<typeof MaterialCommunityIcons>['name'] };
 
-const TAB_META: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string }> = {
-  index: { icon: 'home-outline', label: 'Home' },
-  calendar: { icon: 'calendar-outline', label: 'Calendar' },
-  deals: { icon: 'briefcase-outline', label: 'Deals' },
-  invoices: { icon: 'receipt-outline', label: 'Invoices' },
-  vault: { icon: 'folder-open-outline', label: 'Vault' },
-  profile: { icon: 'person-outline', label: 'Profile' },
+const TAB_ICONS: Record<string, { label: string; active: IconSpec; inactive: IconSpec }> = {
+  index: {
+    label: 'Home',
+    active: { set: 'ion', name: 'home' },
+    inactive: { set: 'ion', name: 'home-outline' },
+  },
+  calendar: {
+    label: 'Calendar',
+    active: { set: 'ion', name: 'calendar' },
+    inactive: { set: 'ion', name: 'calendar-outline' },
+  },
+  deals: {
+    label: 'Deals',
+    active: { set: 'mci', name: 'handshake' },
+    inactive: { set: 'mci', name: 'handshake-outline' },
+  },
+  vault: {
+    label: 'Vault',
+    active: { set: 'ion', name: 'cube' },
+    inactive: { set: 'ion', name: 'cube-outline' },
+  },
+  profile: {
+    label: 'Profile',
+    active: { set: 'ion', name: 'person' },
+    inactive: { set: 'ion', name: 'person-outline' },
+  },
 };
 
-const SIDEBAR_W = 220;
+function TabIcon({ spec, color, size = 22 }: { spec: IconSpec; color: string; size?: number }) {
+  if (spec.set === 'ion') return <Ionicons name={spec.name} size={size} color={color} />;
+  return <MaterialCommunityIcons name={spec.name} size={size} color={color} />;
+}
 
-function SidebarTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={sidebarStyles.container}>
-      <View style={sidebarStyles.logoWrap}>
-        <Text style={sidebarStyles.logo}>Crezo</Text>
-      </View>
-
-      <View style={sidebarStyles.navItems}>
-        {state.routes.map((route, idx) => {
-          const focused = state.index === idx;
-          const meta = TAB_META[route.name];
-          if (!meta) return null;
+    <View
+      pointerEvents="box-none"
+      style={[styles.host, { paddingBottom: Math.max(insets.bottom, 12) }]}
+    >
+      <BlurView
+        intensity={Platform.OS === 'ios' ? 50 : 80}
+        tint="dark"
+        style={styles.bar}
+      >
+        {state.routes.map((route, i) => {
+          const spec = TAB_ICONS[route.name];
+          if (!spec) return null;
+          const isFocused = state.index === i;
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name as never);
+            }
+          };
 
           return (
             <Pressable
               key={route.key}
-              onPress={() => {
-                const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-                if (!focused && !event.defaultPrevented) {
-                  navigation.navigate(route.name);
-                }
-              }}
-              style={[sidebarStyles.navItem, focused && sidebarStyles.navItemActive]}
+              accessibilityRole="button"
+              accessibilityState={isFocused ? { selected: true } : {}}
+              onPress={onPress}
+              style={({ pressed }) => [
+                styles.tab,
+                isFocused && styles.tabActive,
+                pressed && styles.tabPressed,
+              ]}
             >
-              <Ionicons
-                name={focused ? (meta.icon.replace('-outline', '') as keyof typeof Ionicons.glyphMap) : meta.icon}
-                size={20}
-                color={focused ? colors.primary : colors.tertiary_fixed_dim}
+              <TabIcon
+                spec={isFocused ? spec.active : spec.inactive}
+                color={isFocused ? Colors.primary : Colors.tertiaryFixedDim + 'AA'}
+                size={22}
               />
-              <Text style={[sidebarStyles.navLabel, focused && sidebarStyles.navLabelActive]}>
-                {meta.label}
+              <Text
+                style={[
+                  styles.label,
+                  { color: isFocused ? Colors.primary : Colors.tertiaryFixedDim + 'AA' },
+                ]}
+              >
+                {spec.label}
               </Text>
             </Pressable>
           );
         })}
-      </View>
-
-      <View style={sidebarStyles.footer}>
-        <Text style={sidebarStyles.footerText}>Crezo v1.0</Text>
-      </View>
+      </BlurView>
     </View>
   );
 }
 
-const sidebarStyles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: SIDEBAR_W,
-    backgroundColor: colors.surface_container_low,
-    borderRightWidth: 1,
-    borderRightColor: 'rgba(65, 71, 85, 0.15)',
-    paddingTop: 24,
-    paddingBottom: 24,
-    justifyContent: 'flex-start',
-  },
-  logoWrap: {
-    paddingHorizontal: 24,
-    paddingBottom: 32,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(65, 71, 85, 0.12)',
-    marginBottom: 12,
-  },
-  logo: {
-    fontSize: 22,
-    fontWeight: '700',
-    fontFamily: 'PlusJakartaSans_700Bold',
-    color: '#ffffff',
-    letterSpacing: -0.4,
-  },
-  navItems: {
-    flex: 1,
-    paddingHorizontal: 12,
-    gap: 2,
-  },
-  navItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-  },
-  navItemActive: {
-    backgroundColor: 'rgba(173, 198, 255, 0.08)',
-  },
-  navLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    fontFamily: 'Manrope_500Medium',
-    color: colors.tertiary_fixed_dim,
-  },
-  navLabelActive: {
-    color: colors.primary,
-    fontWeight: '600',
-    fontFamily: 'Manrope_600SemiBold',
-  },
-  footer: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(65, 71, 85, 0.12)',
-  },
-  footerText: {
-    fontSize: 11,
-    color: colors.outline,
-    fontFamily: 'Manrope_400Regular',
-  },
-});
-
 export default function TabLayout() {
-  const { width } = useWindowDimensions();
-  const isWideWeb = Platform.OS === 'web' && width >= 768;
-
   return (
     <Tabs
-      tabBar={isWideWeb ? (props) => <SidebarTabBar {...props} /> : undefined}
+      tabBar={(props) => <FloatingTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.tertiary_fixed_dim,
-        tabBarStyle: isWideWeb
-          ? { display: 'none' }
-          : {
-              backgroundColor: colors.surface_container_low,
-              borderTopColor: 'rgba(65, 71, 85, 0.2)',
-            },
-        tabBarLabelStyle: {
-          fontFamily: 'Manrope_500Medium',
-          fontSize: 10,
-        },
-        sceneStyle: isWideWeb ? { marginLeft: SIDEBAR_W } : undefined,
+        sceneStyle: { backgroundColor: Colors.surface },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="calendar"
-        options={{
-          title: 'Calendar',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="deals"
-        options={{
-          title: 'Deals',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="briefcase-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="invoices"
-        options={{
-          title: 'Invoices',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="receipt-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="vault"
-        options={{
-          title: 'Vault',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="folder-open-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
-          ),
-        }}
-      />
+      <Tabs.Screen name="index" />
+      <Tabs.Screen name="calendar" />
+      <Tabs.Screen name="deals" />
+      <Tabs.Screen name="vault" />
+      <Tabs.Screen name="profile" />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  host: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'stretch',
+    paddingHorizontal: 12,
+  },
+  bar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+    borderRadius: 28,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(20, 20, 20, 0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(193, 198, 215, 0.08)',
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    paddingVertical: 6,
+    borderRadius: 18,
+  },
+  tabActive: {
+    backgroundColor: 'rgba(75, 142, 255, 0.14)',
+  },
+  tabPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.96 }],
+  },
+  label: {
+    fontFamily: 'Manrope_600SemiBold',
+    fontSize: 10,
+    letterSpacing: 0.3,
+    marginTop: 1,
+  },
+});

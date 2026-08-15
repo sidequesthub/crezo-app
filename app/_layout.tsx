@@ -1,71 +1,78 @@
+import { useEffect } from 'react';
+import { Slot, useRouter, useSegments } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import {
+  useFonts,
+  PlusJakartaSans_700Bold,
+  PlusJakartaSans_800ExtraBold,
+} from '@expo-google-fonts/plus-jakarta-sans';
 import {
   Manrope_400Regular,
   Manrope_500Medium,
   Manrope_600SemiBold,
-  useFonts,
+  Manrope_700Bold,
 } from '@expo-google-fonts/manrope';
-import {
-  PlusJakartaSans_600SemiBold,
-  PlusJakartaSans_700Bold,
-  PlusJakartaSans_800ExtraBold,
-  useFonts as useJakartaFonts,
-} from '@expo-google-fonts/plus-jakarta-sans';
-import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { TamaguiProvider } from '@tamagui/core';
-
-import { AuthProvider } from '@/contexts/AuthContext';
-import { CreatorDataProvider } from '@/contexts/CreatorDataContext';
-import { colors } from '@/constants/theme';
-import { tamaguiConfig } from '@/constants/tamagui.config';
-
-export { ErrorBoundary } from 'expo-router';
+import { useAuth } from '@/hooks/useAuth';
+import { Colors } from '@/constants/Colors';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [manropeLoaded, manropeError] = useFonts({
+  const { session, loading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  const [fontsLoaded] = useFonts({
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
     Manrope_400Regular,
     Manrope_500Medium,
     Manrope_600SemiBold,
+    Manrope_700Bold,
   });
 
-  const [jakartaLoaded, jakartaError] = useJakartaFonts({
-    PlusJakartaSans_600SemiBold,
-    PlusJakartaSans_700Bold,
-    PlusJakartaSans_800ExtraBold,
-  });
-
-  const loaded = manropeLoaded && jakartaLoaded;
-  const error = manropeError || jakartaError;
+  useEffect(() => {
+    if (!loading && fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [loading, fontsLoaded]);
 
   useEffect(() => {
-    if (error) throw error;
-  }, [error]);
+    if (loading) return;
 
-  useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
-  }, [loaded]);
+    const inAuthGroup = segments[0] === '(auth)';
 
-  if (!loaded) return null;
+    if (!session && !inAuthGroup) {
+      router.replace('/(auth)/login');
+    } else if (session && inAuthGroup) {
+      router.replace('/(tabs)');
+    }
+  }, [session, loading, segments]);
+
+  if (loading || !fontsLoaded) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <StatusBar style="light" />
+      </View>
+    );
+  }
 
   return (
-    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
-      <AuthProvider>
-        <CreatorDataProvider>
-          <StatusBar style="light" backgroundColor={colors.surface} />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: colors.surface },
-            }}
-          />
-        </CreatorDataProvider>
-      </AuthProvider>
-    </TamaguiProvider>
+    <>
+      <Slot />
+      <StatusBar style="light" />
+    </>
   );
 }
+
+const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+  },
+});

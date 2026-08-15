@@ -1,504 +1,314 @@
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
   View,
-  useWindowDimensions,
+  Text,
+  Pressable,
+  ActivityIndicator,
+  StyleSheet,
+  Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Svg, Path, Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
+import * as QueryParams from 'expo-auth-session/build/QueryParams';
+import { supabase } from '@/lib/supabase';
+import { Colors } from '@/constants/Colors';
 
-import { colors, typography } from '@/constants/theme';
-import { useAuth } from '@/contexts/AuthContext';
+WebBrowser.maybeCompleteAuthSession();
 
-type AuthMode = 'choose' | 'phone' | 'phone_otp' | 'email';
+const redirectTo = 'crezo://auth/callback';
 
 export default function LoginScreen() {
-  const {
-    signIn,
-    signUp,
-    signInWithGoogle,
-    sendOtp,
-    verifyOtp,
-    supabaseConfigured,
-  } = useAuth();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const { width } = useWindowDimensions();
-  const isWide = width >= 768;
+  async function signInWithGoogle() {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo, skipBrowserRedirect: true },
+      });
+      if (oauthError) throw oauthError;
+      if (!data?.url) throw new Error('No auth URL returned');
 
-  const [mode, setMode] = useState<AuthMode>('choose');
-  const [phone, setPhone] = useState('+91 ');
-  const [otpCode, setOtpCode] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [emailMode, setEmailMode] = useState<'signin' | 'signup'>('signin');
-  const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+      if (result.type === 'success') {
+        const { params, errorCode } = QueryParams.getQueryParams(result.url);
+        if (errorCode) throw new Error(errorCode);
+        const { access_token, refresh_token } = params;
+        if (!access_token) throw new Error('No access token');
+        await supabase.auth.setSession({ access_token, refresh_token });
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Sign in failed';
+      setError(msg);
+      Alert.alert('Sign in error', msg);
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const otpInputRef = useRef<TextInput>(null);
+  return (
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      {/* Ambient atelier glow — subtle, mimics light hitting the obsidian surface */}
+      <AmbientGlow />
 
-  if (!supabaseConfigured) {
-    return (
-      <View style={styles.fallback}>
+      <View style={styles.header}>
         <Text style={styles.logo}>Crezo</Text>
-        <Text style={styles.tagline}>
-          The creator business OS{'\n'}built for India
-        </Text>
-        <View style={styles.configCard}>
-          <Ionicons name="warning-outline" size={24} color={colors.secondary} />
-          <Text style={styles.configHint}>
-            Connect Supabase to get started. Add EXPO_PUBLIC_SUPABASE_URL and
-            EXPO_PUBLIC_SUPABASE_ANON_KEY to your environment.
+      </View>
+
+      <View style={styles.content}>
+        <View style={styles.heroBlock}>
+          <Text style={styles.eyebrow}>YOUR CREATOR HQ</Text>
+          <Text style={styles.headline}>
+            The studio,{'\n'}
+            <Text style={styles.headlineAccent}>unlocked.</Text>
+          </Text>
+          <Text style={styles.subtitle}>
+            Manage deals, deliveries, and invoices in one premium workspace built for the modern Indian creator.
           </Text>
         </View>
-      </View>
-    );
-  }
 
-  async function handleGoogleSignIn() {
-    setMessage(null);
-    setSubmitting(true);
-    const { error } = await signInWithGoogle();
-    setSubmitting(false);
-    if (error) setMessage(error.message);
-  }
+        <View style={styles.actions}>
+          <Pressable
+            onPress={() => router.push('/(auth)/otp')}
+            disabled={loading}
+            style={({ pressed }) => [styles.primaryWrap, pressed && styles.pressed]}
+          >
+            <LinearGradient
+              colors={['#ADC6FF', '#4B8EFF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.primaryButton}
+            >
+              <Ionicons name="phone-portrait-outline" size={18} color={Colors.onPrimaryContainer} />
+              <Text style={styles.primaryText}>Continue with Phone</Text>
+            </LinearGradient>
+          </Pressable>
 
-  async function handleSendOtp() {
-    setMessage(null);
-    const cleaned = phone.replace(/\s/g, '');
-    if (cleaned.length < 12) {
-      setMessage('Enter a valid phone number with country code');
-      return;
-    }
-    setSubmitting(true);
-    const { error } = await sendOtp(cleaned);
-    setSubmitting(false);
-    if (error) {
-      setMessage(error.message);
-      return;
-    }
-    setMode('phone_otp');
-    setTimeout(() => otpInputRef.current?.focus(), 300);
-  }
-
-  async function handleVerifyOtp() {
-    setMessage(null);
-    if (otpCode.length < 6) {
-      setMessage('Enter the 6-digit code');
-      return;
-    }
-    setSubmitting(true);
-    const cleaned = phone.replace(/\s/g, '');
-    const { error } = await verifyOtp(cleaned, otpCode);
-    setSubmitting(false);
-    if (error) {
-      setMessage(error.message);
-      return;
-    }
-    router.replace('/(tabs)');
-  }
-
-  async function handleEmailSubmit() {
-    setMessage(null);
-    if (!email.trim() || !password) {
-      setMessage('Enter email and password');
-      return;
-    }
-    setSubmitting(true);
-    const fn = emailMode === 'signin' ? signIn : signUp;
-    const { error } = await fn(email.trim(), password);
-    setSubmitting(false);
-    if (error) {
-      setMessage(error.message);
-      return;
-    }
-    router.replace('/(tabs)');
-  }
-
-  return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        contentContainerStyle={[
-          styles.scroll,
-          isWide && styles.scrollWide,
-        ]}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={[styles.card, isWide && styles.cardWide]}>
-          <View style={styles.header}>
-            <Text style={styles.logo}>Crezo</Text>
-            <Text style={styles.tagline}>
-              The creator business OS{'\n'}built for India
-            </Text>
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
           </View>
 
-          {mode === 'choose' && (
-            <View style={styles.methodsContainer}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.socialButton,
-                  pressed && styles.pressed,
-                ]}
-                onPress={handleGoogleSignIn}
-                disabled={submitting}
-              >
-                <Ionicons name="logo-google" size={20} color={colors.on_surface} />
-                <Text style={styles.socialButtonText}>Continue with Google</Text>
-              </Pressable>
-
-              <Pressable
-                style={({ pressed }) => [
-                  styles.socialButton,
-                  pressed && styles.pressed,
-                ]}
-                onPress={() => { setMode('phone'); setMessage(null); }}
-              >
-                <Ionicons name="call-outline" size={20} color={colors.on_surface} />
-                <Text style={styles.socialButtonText}>
-                  Continue with phone number
-                </Text>
-              </Pressable>
-
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              <Pressable
-                style={({ pressed }) => [
-                  styles.emailLink,
-                  pressed && styles.pressed,
-                ]}
-                onPress={() => { setMode('email'); setMessage(null); }}
-              >
-                <Text style={styles.emailLinkText}>Sign in with email</Text>
-              </Pressable>
-            </View>
-          )}
-
-          {mode === 'phone' && (
-            <View style={styles.formContainer}>
-              <Text style={styles.formTitle}>Enter your mobile number</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="+91 98765 43210"
-                placeholderTextColor={colors.on_surface_variant}
-                keyboardType="phone-pad"
-                value={phone}
-                onChangeText={setPhone}
-                autoFocus
-              />
-              <GradientButton
-                title="Send OTP"
-                onPress={handleSendOtp}
-                disabled={submitting}
-              />
-              <BackLink onPress={() => { setMode('choose'); setMessage(null); }} />
-            </View>
-          )}
-
-          {mode === 'phone_otp' && (
-            <View style={styles.formContainer}>
-              <Text style={styles.formTitle}>Enter verification code</Text>
-              <Text style={styles.formHint}>Sent to {phone}</Text>
-              <TextInput
-                ref={otpInputRef}
-                style={[styles.input, styles.otpInput]}
-                placeholder="000000"
-                placeholderTextColor={colors.on_surface_variant}
-                keyboardType="number-pad"
-                maxLength={6}
-                value={otpCode}
-                onChangeText={setOtpCode}
-              />
-              <GradientButton
-                title="Verify"
-                onPress={handleVerifyOtp}
-                disabled={submitting}
-              />
-              <Pressable onPress={handleSendOtp}>
-                <Text style={styles.resendText}>Resend code</Text>
-              </Pressable>
-              <BackLink onPress={() => { setMode('phone'); setMessage(null); setOtpCode(''); }} />
-            </View>
-          )}
-
-          {mode === 'email' && (
-            <View style={styles.formContainer}>
-              <Text style={styles.formTitle}>
-                {emailMode === 'signin' ? 'Sign in' : 'Create account'}
-              </Text>
-              <TextInput
-                style={styles.input}
-                placeholder="you@example.com"
-                placeholderTextColor={colors.on_surface_variant}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="email-address"
-                value={email}
-                onChangeText={setEmail}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor={colors.on_surface_variant}
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-              />
-              <GradientButton
-                title={emailMode === 'signin' ? 'Sign in' : 'Create account'}
-                onPress={handleEmailSubmit}
-                disabled={submitting}
-              />
-              <Pressable
-                onPress={() =>
-                  setEmailMode(emailMode === 'signin' ? 'signup' : 'signin')
-                }
-                style={styles.toggleEmail}
-              >
-                <Text style={styles.toggleEmailText}>
-                  {emailMode === 'signin'
-                    ? 'Need an account? Sign up'
-                    : 'Already have an account? Sign in'}
-                </Text>
-              </Pressable>
-              <BackLink onPress={() => { setMode('choose'); setMessage(null); }} />
-            </View>
-          )}
-
-          {message && <Text style={styles.error}>{message}</Text>}
+          <Pressable
+            onPress={signInWithGoogle}
+            disabled={loading}
+            style={({ pressed }) => [styles.glassButton, pressed && styles.pressed]}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color={Colors.onSurface} />
+            ) : (
+              <>
+                <GoogleLogo />
+                <Text style={styles.glassText}>Continue with Google</Text>
+              </>
+            )}
+          </Pressable>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+        {error && <Text style={styles.error}>{error}</Text>}
+      </View>
+
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>
+          By continuing, you agree to our{' '}
+          <Text style={styles.footerLink}>Terms</Text>
+          {' & '}
+          <Text style={styles.footerLink}>Privacy</Text>
+          {'.'}
+        </Text>
+      </View>
+    </SafeAreaView>
   );
 }
 
-function GradientButton({
-  title,
-  onPress,
-  disabled,
-}: {
-  title: string;
-  onPress: () => void;
-  disabled?: boolean;
-}) {
+function AmbientGlow() {
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      style={({ pressed }) => [
-        styles.gradientWrapper,
-        pressed && styles.pressed,
-        disabled && styles.disabled,
-      ]}
-    >
-      <LinearGradient
-        colors={[colors.primary, colors.primary_container]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradientButton}
-      >
-        <Text style={styles.gradientButtonText}>{title}</Text>
-      </LinearGradient>
-    </Pressable>
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <Svg height="100%" width="100%">
+        <Defs>
+          <RadialGradient id="glow" cx="0.7" cy="0.15" r="0.6">
+            <Stop offset="0%" stopColor="#4B8EFF" stopOpacity="0.18" />
+            <Stop offset="60%" stopColor="#4B8EFF" stopOpacity="0.04" />
+            <Stop offset="100%" stopColor="#4B8EFF" stopOpacity="0" />
+          </RadialGradient>
+          <RadialGradient id="warm" cx="0.1" cy="0.95" r="0.5">
+            <Stop offset="0%" stopColor="#FE9400" stopOpacity="0.10" />
+            <Stop offset="100%" stopColor="#FE9400" stopOpacity="0" />
+          </RadialGradient>
+        </Defs>
+        <Circle cx="75%" cy="12%" r="60%" fill="url(#glow)" />
+        <Circle cx="10%" cy="95%" r="50%" fill="url(#warm)" />
+      </Svg>
+    </View>
   );
 }
 
-function BackLink({ onPress }: { onPress: () => void }) {
+function GoogleLogo() {
   return (
-    <Pressable onPress={onPress} style={styles.backLink}>
-      <Ionicons name="arrow-back" size={16} color={colors.on_surface_variant} />
-      <Text style={styles.backLinkText}>Back</Text>
-    </Pressable>
+    <Svg width={20} height={20} viewBox="0 0 24 24">
+      <Path
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+        fill="#4285F4"
+      />
+      <Path
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+        fill="#34A853"
+      />
+      <Path
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+        fill="#FBBC05"
+      />
+      <Path
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+        fill="#EA4335"
+      />
+    </Svg>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.surface },
-  scroll: {
-    flexGrow: 1,
-    padding: 24,
-    justifyContent: 'center',
-  },
-  scrollWide: {
-    alignItems: 'center',
-  },
-  card: {
-    width: '100%',
-    gap: 24,
-  },
-  cardWide: {
-    maxWidth: 440,
-  },
-  fallback: {
+  container: {
     flex: 1,
-    padding: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 16,
-    backgroundColor: colors.surface,
-  },
-  configCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    padding: 20,
-    backgroundColor: colors.surface_container_high,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(65, 71, 85, 0.15)',
-    marginTop: 24,
-    maxWidth: 400,
-  },
-  configHint: {
-    ...typography.body_sm,
-    color: colors.on_surface_variant,
-    flex: 1,
+    backgroundColor: Colors.surface,
   },
   header: {
-    alignItems: 'center',
-    marginBottom: 16,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
   logo: {
     fontFamily: 'PlusJakartaSans_800ExtraBold',
-    fontSize: 40,
-    letterSpacing: -1.5,
-    color: colors.on_surface,
-    marginBottom: 12,
+    fontSize: 22,
+    color: Colors.onSurface,
+    letterSpacing: -0.5,
   },
-  tagline: {
-    ...typography.body_lg,
-    color: colors.on_surface_variant,
-    textAlign: 'center',
-    lineHeight: 28,
+  content: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: 28,
+    paddingTop: 48,
+    paddingBottom: 24,
   },
-  methodsContainer: {
-    gap: 12,
+  heroBlock: {
+    gap: 16,
   },
-  socialButton: {
+  eyebrow: {
+    fontFamily: 'Manrope_600SemiBold',
+    fontSize: 11,
+    letterSpacing: 1.6,
+    color: Colors.primary,
+  },
+  headline: {
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    fontSize: 44,
+    color: Colors.onSurface,
+    letterSpacing: -1.2,
+    lineHeight: 48,
+  },
+  headlineAccent: {
+    color: Colors.primary,
+    fontStyle: 'italic',
+  },
+  subtitle: {
+    fontFamily: 'Manrope_400Regular',
+    fontSize: 15,
+    color: Colors.onSurfaceVariant,
+    lineHeight: 24,
+    marginTop: 4,
+    maxWidth: 340,
+  },
+  actions: {
+    gap: 16,
+  },
+  primaryWrap: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: '#4B8EFF',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  primaryButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    backgroundColor: colors.surface_container_high,
-    borderWidth: 1,
-    borderColor: 'rgba(65, 71, 85, 0.15)',
+    height: 56,
+    gap: 10,
   },
-  socialButtonText: {
-    ...typography.label_lg,
-    color: colors.on_surface,
+  primaryText: {
+    fontFamily: 'Manrope_700Bold',
+    fontSize: 16,
+    color: Colors.onPrimaryContainer,
+    letterSpacing: 0.1,
   },
-  divider: {
+  glassButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    marginVertical: 8,
+    justifyContent: 'center',
+    backgroundColor: Colors.surfaceContainerHigh,
+    height: 56,
+    borderRadius: 14,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(193, 198, 215, 0.08)',
+  },
+  glassText: {
+    fontFamily: 'Manrope_600SemiBold',
+    fontSize: 15,
+    color: Colors.onSurface,
+  },
+  pressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.99 }],
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.surface_container_highest,
+    backgroundColor: 'rgba(193, 198, 215, 0.10)',
   },
   dividerText: {
-    ...typography.label_sm,
-    color: colors.on_surface_variant,
-    textTransform: 'uppercase',
-  },
-  emailLink: {
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  emailLinkText: {
-    ...typography.body_md,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  formContainer: {
-    gap: 16,
-  },
-  formTitle: {
-    ...typography.headline_md,
-    color: colors.on_surface,
-  },
-  formHint: {
-    ...typography.body_sm,
-    color: colors.on_surface_variant,
-    marginTop: -8,
-  },
-  input: {
-    ...typography.body_md,
-    color: colors.on_surface,
-    backgroundColor: colors.surface_container_low,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(65, 71, 85, 0.2)',
-  },
-  otpInput: {
-    textAlign: 'center',
-    fontSize: 24,
-    letterSpacing: 8,
-    fontFamily: 'PlusJakartaSans_700Bold',
-  },
-  gradientWrapper: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  gradientButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gradientButtonText: {
-    ...typography.label_lg,
-    color: colors.on_primary_container,
-  },
-  resendText: {
-    ...typography.body_sm,
-    color: colors.primary,
-    textAlign: 'center',
-  },
-  toggleEmail: {
-    alignItems: 'center',
-  },
-  toggleEmailText: {
-    ...typography.body_md,
-    color: colors.primary,
-  },
-  backLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 8,
-  },
-  backLinkText: {
-    ...typography.body_sm,
-    color: colors.on_surface_variant,
+    fontFamily: 'Manrope_500Medium',
+    fontSize: 12,
+    color: Colors.onSurfaceVariant,
+    letterSpacing: 0.4,
   },
   error: {
-    ...typography.body_sm,
-    color: colors.error,
+    fontFamily: 'Manrope_500Medium',
+    fontSize: 13,
+    color: Colors.error,
     textAlign: 'center',
-    backgroundColor: 'rgba(147, 0, 10, 0.15)',
-    padding: 12,
-    borderRadius: 8,
+    marginTop: 16,
   },
-  pressed: { opacity: 0.8 },
-  disabled: { opacity: 0.5 },
+  footer: {
+    paddingHorizontal: 32,
+    paddingBottom: 24,
+    alignItems: 'center',
+  },
+  footerText: {
+    fontFamily: 'Manrope_400Regular',
+    fontSize: 12,
+    color: Colors.onSurfaceVariant,
+    textAlign: 'center',
+    letterSpacing: 0.2,
+  },
+  footerLink: {
+    fontFamily: 'Manrope_600SemiBold',
+    color: Colors.onSurface,
+    textDecorationLine: 'underline',
+  },
 });

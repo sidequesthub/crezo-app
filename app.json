@@ -1,49 +1,39 @@
 {
   "expo": {
-    "name": "crezo-app",
+    "name": "Crezo",
     "slug": "crezo-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "crezoapp",
+    "scheme": "crezo",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#131313"
-    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.crezo.crezoApp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#131313"
       },
-      "predictiveBackGestureEnabled": false
+      "package": "com.crezo.crezoApp"
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png",
-      "basePath": "/app"
+      "output": "single"
     },
     "plugins": [
       "expo-router",
-      [
-        "expo-media-library",
-        {
-          "photosPermission": "Crezo needs access to organize your content into deal albums visible in CapCut, WhatsApp, and Gallery.",
-          "savePhotosPermission": "Crezo creates native albums on your device to organize media by deal."
-        }
-      ],
-      "expo-sharing",
-      "@react-native-community/datetimepicker"
+      "expo-font",
+      "expo-web-browser"
     ],
-    "experiments": {
-      "typedRoutes": true
-    }
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1d691ae0-5d08-4135-a8ac-0fa3292ccee3"
+      }
+    },
+    "owner": "jnvtarun"
   }
 }

@@ -1,44 +1,63 @@
-/**
- * Creator Glass Widget — high-level metrics card
- * surface_container_high with outline_variant (10% opacity) and primary glow
- */
+import { View, StyleSheet, ViewProps } from 'react-native';
+import { Svg, Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
+import { Colors } from '@/constants/Colors';
 
-import { StyleSheet, View, ViewStyle } from 'react-native';
+type GlowColor = 'primary' | 'secondary' | 'neutral' | 'none';
 
-import { borderRadius, colors } from '@/constants/theme';
-
-interface GlassCardProps {
-  children: React.ReactNode;
-  style?: ViewStyle;
+interface GlassCardProps extends ViewProps {
+  glow?: GlowColor;
+  padding?: number;
 }
 
-export function GlassCard({ children, style }: GlassCardProps) {
+const GLOW_COLORS: Record<Exclude<GlowColor, 'none'>, string> = {
+  primary: '#4B8EFF',
+  secondary: '#FE9400',
+  neutral: '#E5E2E1',
+};
+
+/**
+ * "Creator Glass" widget from the Digital Atelier system:
+ * surface-container-high base + outline-variant ghost border at 10% +
+ * an ambient tonal glow in the top-right corner.
+ */
+export function GlassCard({
+  glow = 'none',
+  padding = 20,
+  style,
+  children,
+  ...rest
+}: GlassCardProps) {
   return (
-    <View style={[styles.container, style]}>
-      <View style={styles.glow} />
+    <View style={[styles.card, { padding }, style]} {...rest}>
+      {glow !== 'none' && (
+        <View pointerEvents="none" style={styles.glowWrap}>
+          <Svg width="100%" height="100%">
+            <Defs>
+              <RadialGradient id={`g-${glow}`} cx="0.85" cy="0.15" r="0.6">
+                <Stop offset="0%" stopColor={GLOW_COLORS[glow]} stopOpacity="0.22" />
+                <Stop offset="60%" stopColor={GLOW_COLORS[glow]} stopOpacity="0.05" />
+                <Stop offset="100%" stopColor={GLOW_COLORS[glow]} stopOpacity="0" />
+              </RadialGradient>
+            </Defs>
+            <Circle cx="85%" cy="15%" r="70%" fill={`url(#g-${glow})`} />
+          </Svg>
+        </View>
+      )}
       {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: 'rgba(53, 53, 52, 0.4)',
-    borderRadius: borderRadius.xl,
+  card: {
+    backgroundColor: Colors.surfaceContainerHigh,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(65, 71, 85, 0.1)',
+    borderColor: 'rgba(193, 198, 215, 0.08)',
     overflow: 'hidden',
-    padding: 24,
     position: 'relative',
   },
-  glow: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: `${colors.primary}0D`,
-    opacity: 0.5,
+  glowWrap: {
+    ...StyleSheet.absoluteFillObject,
   },
 });
