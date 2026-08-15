@@ -1,0 +1,53 @@
+---
+description: Backend architecture principles
+alwaysApply: true
+---
+
+# Architecture Principles
+
+## Separation of Concerns
+
+- **Routes** handle HTTP: parse request, call service, format response, set status code
+- **Services** handle business logic and data access: no HTTP awareness, no `req`/`res`
+- **Config** handles environment and external clients: single source of truth
+
+## Error Handling
+
+Always catch errors in route handlers and return structured JSON:
+
+```typescript
+try {
+  const result = await someService(id);
+  res.json(result);
+} catch (e: unknown) {
+  res.status(400).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+}
+```
+
+Never let unhandled exceptions crash the server. Never use empty `catch {}` blocks.
+
+## Auth Pattern
+
+Every protected route uses `requireAuth` middleware. Extract the user in the handler:
+
+```typescript
+router.get('/', async (req: Request, res: Response) => {
+  const userId = getUser(req).sub;  // Supabase auth user ID
+  const creator = await getCreatorByUserId(userId);
+  // ...
+});
+```
+
+## Adding a New Module
+
+1. Create `src/modules/{name}/service.ts` with typed functions
+2. Create `src/modules/{name}/routes.ts` with Express router
+3. Mount in `src/app.ts`: `app.use('/api/{name}', requireAuth, routes)`
+4. Add types/interfaces at the top of `service.ts`
+
+## No Over-Engineering
+
+- No ORMs — use Supabase client directly
+- No DI containers — use explicit imports
+- No abstract base classes — use plain functions
+- No middleware chains beyond auth — keep it flat

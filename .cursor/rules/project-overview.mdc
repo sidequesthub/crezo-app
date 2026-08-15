@@ -1,0 +1,41 @@
+---
+description: Crezo backend project overview and conventions
+alwaysApply: true
+---
+
+# Crezo Backend — Express + TypeScript
+
+REST API backend for the Crezo creator platform. Supabase is the database (PostgreSQL) and auth provider.
+
+## Stack
+
+- **Runtime**: Node.js + TypeScript
+- **Framework**: Express (no DI frameworks, no decorators — plain functions and modules)
+- **Database**: Supabase (PostgreSQL) via `@supabase/supabase-js` with service role key
+- **Auth**: JWT validation of Supabase-issued tokens via `jsonwebtoken`
+- **Dev server**: `tsx watch` for hot reload
+
+## Project Structure
+
+```
+src/
+  index.ts          → Entry point, starts server
+  app.ts            → Express app, middleware, route mounting
+  config/           → env vars, Supabase client singleton
+  middleware/       → auth JWT guard, shared middleware
+  modules/          → Feature modules (each has service.ts + routes.ts)
+    creators/       → Profile CRUD
+    deals/          → Deal pipeline + brands
+    content/        → Content calendar slots
+    invoices/       → Invoice CRUD
+    vault/          → Asset metadata
+```
+
+## Key Conventions
+
+- Each module is a folder with `service.ts` (data access) and `routes.ts` (Express router)
+- Service functions are pure — they take IDs/data, return typed results, throw on error
+- Routes handle HTTP concerns (status codes, error formatting) and call service functions
+- All authenticated routes use `requireAuth` middleware; extract user via `getUser(req)`
+- Supabase client is a singleton from `config/supabase.ts`
+- Environment config is centralized in `config/env.ts`

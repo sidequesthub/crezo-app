@@ -1,0 +1,42 @@
+---
+description: TypeScript code style for the backend
+globs: "**/*.ts"
+alwaysApply: false
+---
+
+# Code Style
+
+## TypeScript
+
+- Strict mode enabled — handle nulls explicitly
+- Use `interface` for data shapes, `type` for unions/intersections
+- Export types alongside their service functions
+- Use `as const` for literal unions (statuses, platforms)
+- Prefer `unknown` over `any` in catch blocks
+
+## Naming
+
+- Files: `kebab-case.ts` (e.g., `auth-guard.ts`)
+- Functions: `camelCase` (e.g., `getCreatorByUserId`)
+- Types/Interfaces: `PascalCase` (e.g., `DealInput`)
+- Constants: `UPPER_SNAKE_CASE` or `camelCase` depending on scope
+
+## Functions
+
+- Keep functions small and focused — one responsibility each
+- Service functions should be async and return typed promises
+- Route handlers should be thin — delegate logic to services
+- Prefer named exports over default exports (except for Router)
+
+## No Comments That Narrate
+
+```typescript
+// BAD: Get the creator from the database
+const creator = await getCreatorByUserId(userId);
+
+// GOOD: (no comment needed — the code is self-documenting)
+const creator = await getCreatorByUserId(userId);
+
+// GOOD: Fallback to 'Creator' when name is null (phone-only signup)
+const name = raw.name ?? raw.phone ?? 'Creator';
+```

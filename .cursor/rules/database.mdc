@@ -1,0 +1,42 @@
+---
+description: Database and Supabase conventions
+globs: "**/service.ts"
+alwaysApply: false
+---
+
+# Database Conventions
+
+## Supabase Client
+
+Always use `getSupabase()` from `config/supabase.ts`. Never create ad-hoc clients.
+
+## Query Pattern
+
+```typescript
+const { data, error } = await getSupabase()
+  .from('table_name')
+  .select('*')
+  .eq('creator_id', creatorId)
+  .order('created_at', { ascending: false });
+
+if (error) throw new Error(error.message);
+return (data ?? []) as TypedArray[];
+```
+
+## Row-Level Security
+
+- Backend uses the **service role key** — RLS is bypassed
+- Always filter by `creator_id` in queries to enforce data isolation
+- Never trust client-provided `creator_id` — always derive from auth token
+
+## Schema Conventions
+
+- All tables have `id` (UUID), `created_at`, `updated_at`
+- Foreign keys use `_id` suffix: `creator_id`, `deal_id`, `brand_id`
+- Status fields are text with constrained values, not enums
+- Nullable FKs are acceptable (e.g., `brand_id` can be null)
+
+## Migrations
+
+- Stored in `supabase/migrations/` with sequential numbering
+- Each migration is idempotent (`CREATE TABLE IF NOT EXISTS`, `ALTER ... ADD IF NOT EXISTS`)
