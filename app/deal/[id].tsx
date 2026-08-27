@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, Pressable } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
 import { DeliverablesEditor } from '@/components/deals/DeliverablesEditor';
 import { DealForm, type DealFormValues } from '@/components/deals/DealForm';
@@ -95,6 +96,14 @@ export default function EditDealScreen() {
         items={deliverables}
         onChanged={setDeliverables}
       />
+
+      <Pressable
+        onPress={() => router.push(`/invoices/new?dealId=${id}`)}
+        style={({ pressed }) => [styles.invoiceButton, pressed && { opacity: 0.85 }]}
+      >
+        <Ionicons name="receipt-outline" size={18} color={Colors.primary} />
+        <Text style={styles.invoiceText}>Create invoice from this deal</Text>
+      </Pressable>
     </DealForm>
   );
 }
@@ -113,5 +122,15 @@ const styles = StyleSheet.create({
     color: Colors.onSurfaceVariant,
     textAlign: 'center',
   },
+  invoiceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: Colors.surfaceContainerHigh,
+  },
+  invoiceText: { fontFamily: 'Manrope_700Bold', fontSize: 13, color: Colors.primary },
 
 });

@@ -86,6 +86,11 @@ export default function ProfileScreen() {
             onPress={() => router.push('/settings/profile')}
           />
           <Row
+            icon="receipt-outline"
+            label="Invoices"
+            onPress={() => router.push('/invoices')}
+          />
+          <Row
             icon="card-outline"
             label="Payment & GST"
             detail={hasPaymentDetails ? undefined : 'Not set up'}

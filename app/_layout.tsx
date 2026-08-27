@@ -84,6 +84,9 @@ export default function RootLayout() {
         <Stack.Screen name="settings/notifications" />
         <Stack.Screen name="settings/privacy" />
         <Stack.Screen name="settings/support" />
+        <Stack.Screen name="invoices/index" />
+        <Stack.Screen name="invoices/new" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="invoices/[id]" options={{ presentation: 'modal' }} />
       </Stack>
       <StatusBar style="light" />
     </>

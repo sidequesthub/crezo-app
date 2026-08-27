@@ -13,6 +13,7 @@ export default function EditProfileScreen() {
   const [bio, setBio] = useState('');
   const [niche, setNiche] = useState('');
   const [email, setEmail] = useState('');
+  const [address, setAddress] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,6 +26,7 @@ export default function EditProfileScreen() {
         setBio(p.bio ?? '');
         setNiche(p.niche ?? '');
         setEmail(p.email ?? '');
+        setAddress(p.address ?? '');
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'Could not load'));
   }, []);
@@ -42,6 +44,7 @@ export default function EditProfileScreen() {
         bio: bio.trim() || null,
         niche: niche.trim() || null,
         email: email.trim() || null,
+        address: address.trim() || null,
       });
       router.back();
     } catch (e) {
@@ -85,6 +88,14 @@ export default function EditProfileScreen() {
           onChangeText={setBio}
           placeholder="A line or two about what you make"
           multiline
+        />
+        <LabelledInput
+          label="Billing address"
+          value={address}
+          onChangeText={setAddress}
+          placeholder={'Street\nCity, State  PIN'}
+          multiline
+          hint="Appears on your invoices."
         />
         <LabelledInput
           label="Email"

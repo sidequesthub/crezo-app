@@ -13,6 +13,8 @@ export interface CreatorProfile {
   phone: string | null;
   bio: string | null;
   niche: string | null;
+  address: string | null;
+  state_code: string | null;
   avatar_url: string | null;
   media_kit_url: string | null;
   gst_number: string | null;
@@ -25,7 +27,7 @@ export interface CreatorProfile {
 }
 
 const SELECT =
-  'id, name, email, phone, bio, niche, avatar_url, media_kit_url, gst_number, pan_number, upi_id, bank_account_number, bank_ifsc, bank_name, created_at';
+  'id, name, email, phone, bio, niche, address, state_code, avatar_url, media_kit_url, gst_number, pan_number, upi_id, bank_account_number, bank_ifsc, bank_name, created_at';
 
 export async function getProfile(): Promise<CreatorProfile | null> {
   const creatorId = await getCreatorId();
