@@ -1,19 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
 import { InvoiceForm } from '@/components/invoices/InvoiceForm';
-import { invoiceStatusMeta } from '@/constants/invoiceStatus';
+import { InvoicePreview } from '@/components/invoices/InvoicePreview';
+import { IssuedInvoiceView } from '@/components/invoices/IssuedInvoiceView';
 import {
-  getInvoice, updateInvoice, deleteInvoice, setInvoiceStatus, INVOICE_STATUS_ORDER,
+  getInvoice, updateInvoice, deleteInvoice, setInvoiceStatus,
+  issueInvoice, cancelInvoice, reviseInvoice, isEditable, invoiceLabel,
   getCreatorId, type Invoice, type InvoiceInput, type InvoiceStatus,
 } from '@/lib/invoices';
 import { getProfile, type CreatorProfile } from '@/lib/profile';
 import { shareInvoicePdf } from '@/lib/invoicePdf';
 import { stateCodeFromGstin } from '@/constants/gst';
 
-export default function EditInvoiceScreen() {
+export default function InvoiceDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
 
@@ -21,6 +23,7 @@ export default function EditInvoiceScreen() {
   const [creator, setCreator] = useState<CreatorProfile | null>(null);
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [initial, setInitial] = useState<InvoiceInput | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +44,6 @@ export default function EditInvoiceScreen() {
         place_of_supply: inv.place_of_supply,
         sac_code: inv.sac_code,
         notes: inv.notes,
-        status: inv.status,
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load');
@@ -55,11 +57,6 @@ export default function EditInvoiceScreen() {
     setSharing(true);
     try {
       await shareInvoicePdf(invoice, creator);
-      // Sharing a draft implies it has gone out.
-      if (invoice.status === 'draft') {
-        await setInvoiceStatus(invoice.id, 'sent');
-        await load();
-      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not generate the PDF');
     } finally {
@@ -67,20 +64,104 @@ export default function EditInvoiceScreen() {
     }
   }
 
-  async function changeStatus(status: InvoiceStatus) {
-    try {
-      await setInvoiceStatus(id, status);
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not update status');
-    }
+  /** Issuing assigns the number and locks the invoice. */
+  function confirmIssue() {
+    Alert.alert(
+      'Issue this invoice?',
+      'It gets the next number in your series and can no longer be edited. To correct it later you would cancel and reissue.',
+      [
+        { text: 'Keep as draft', style: 'cancel' },
+        {
+          text: 'Issue',
+          onPress: async () => {
+            try {
+              await issueInvoice(id);
+              await load();
+            } catch (e) {
+              setError(e instanceof Error ? e.message : 'Could not issue');
+            }
+          },
+        },
+      ],
+    );
   }
 
-  function confirmDelete() {
-    Alert.alert('Delete this invoice?', 'This cannot be undone.', [
+  /** Asks for a reason where the platform supports it, else just confirms. */
+  function promptForReason(
+    title: string,
+    message: string,
+    confirmLabel: string,
+    destructive: boolean,
+    onConfirm: (reason: string) => void,
+  ) {
+    if (Platform.OS === 'ios' && Alert.prompt) {
+      Alert.prompt(
+        title,
+        message,
+        [
+          { text: 'Back', style: 'cancel' },
+          {
+            text: confirmLabel,
+            style: destructive ? 'destructive' : 'default',
+            onPress: (reason?: string) => onConfirm(reason ?? ''),
+          },
+        ],
+        'plain-text',
+      );
+      return;
+    }
+    Alert.alert(title, message, [
+      { text: 'Back', style: 'cancel' },
+      {
+        text: confirmLabel,
+        style: destructive ? 'destructive' : 'default',
+        onPress: () => onConfirm(''),
+      },
+    ]);
+  }
+
+  function confirmCancel() {
+    promptForReason(
+      'Cancel this invoice?',
+      'Add a reason for your records. The number stays reserved and cannot be reused.',
+      'Cancel invoice',
+      true,
+      async (reason) => {
+        try {
+          await cancelInvoice(id, reason);
+          await load();
+        } catch (e) {
+          setError(e instanceof Error ? e.message : 'Could not cancel');
+        }
+      },
+    );
+  }
+
+  function confirmRevise() {
+    promptForReason(
+      'Cancel and revise?',
+      'This invoice is cancelled and a copy opens as a new draft. The replacement gets its own number when you issue it.',
+      'Revise',
+      false,
+      async (reason) => {
+        try {
+          const cid = creatorId ?? (await getCreatorId());
+          if (!cid || !invoice) throw new Error('Could not load your profile.');
+          const replacement = await reviseInvoice(cid, invoice, reason || 'Revised');
+          router.replace(`/invoices/${replacement.id}`);
+        } catch (e) {
+          setError(e instanceof Error ? e.message : 'Could not revise');
+        }
+      },
+    );
+  }
+
+  function confirmDeleteDraft() {
+    Alert.alert('Delete this draft?', 'It has no invoice number yet, so nothing is left behind.', [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Delete', style: 'destructive',
+        text: 'Delete',
+        style: 'destructive',
         onPress: async () => {
           try { await deleteInvoice(id); router.back(); }
           catch (e) { setError(e instanceof Error ? e.message : 'Could not delete'); }
@@ -89,66 +170,81 @@ export default function EditInvoiceScreen() {
     ]);
   }
 
-  if (error && !initial) {
+  async function changeStatus(status: InvoiceStatus) {
+    try { await setInvoiceStatus(id, status); await load(); }
+    catch (e) { setError(e instanceof Error ? e.message : 'Could not update status'); }
+  }
+
+  if (error && !invoice) {
     return <View style={styles.centered}><Text style={styles.errorText}>{error}</Text></View>;
   }
-  if (!initial || !invoice) {
+  if (!invoice || !initial) {
     return <View style={styles.centered}><ActivityIndicator size="large" color={Colors.primary} /></View>;
   }
 
-  const number = invoice.invoice_number ? `INV-${String(invoice.invoice_number).padStart(4, '0')}` : 'Draft';
+  const preview = (
+    <InvoicePreview
+      visible={previewOpen}
+      invoice={invoice}
+      creator={creator}
+      sharing={sharing}
+      onClose={() => setPreviewOpen(false)}
+      onShare={async () => { await share(); setPreviewOpen(false); }}
+    />
+  );
+
+  // Issued invoices are immutable — show the record, not the form.
+  if (!isEditable(invoice)) {
+    return (
+      <>
+        <IssuedInvoiceView
+          invoice={invoice}
+          sharing={sharing}
+          onClose={() => router.back()}
+          onPreview={() => setPreviewOpen(true)}
+          onShare={share}
+          onStatus={changeStatus}
+          onCancel={confirmCancel}
+          onRevise={confirmRevise}
+        />
+        {preview}
+      </>
+    );
+  }
 
   return (
     <InvoiceForm
-      heading={number}
+      heading={invoiceLabel(invoice)}
       initial={initial}
       creatorId={creatorId}
       creator={creator}
-      submitLabel="Save changes"
+      submitLabel="Save draft"
       onClose={() => router.back()}
-      onDelete={confirmDelete}
+      onDelete={confirmDeleteDraft}
       onSubmit={async (values) => {
         const supplierState = creator?.state_code ?? stateCodeFromGstin(creator?.gst_number);
         await updateInvoice(id, values, supplierState);
-        router.back();
+        await load();
       }}
       extra={
         <View style={styles.actions}>
-          <Pressable onPress={share} disabled={sharing} style={({ pressed }) => [styles.shareButton, pressed && { opacity: 0.85 }]}>
-            {sharing ? (
-              <ActivityIndicator color={Colors.onPrimaryContainer} />
-            ) : (
-              <>
-                <Ionicons name="share-outline" size={18} color={Colors.onPrimaryContainer} />
-                <Text style={styles.shareText}>Share PDF</Text>
-              </>
-            )}
-          </Pressable>
-          <Text style={styles.shareHint}>
-            Generates the invoice as a PDF and opens your share sheet — WhatsApp, email, anywhere.
-          </Text>
-
-          <Text style={styles.statusLabel}>STATUS</Text>
-          <View style={styles.statusRow}>
-            {INVOICE_STATUS_ORDER.map((s) => {
-              const meta = invoiceStatusMeta(s);
-              const active = invoice.status === s;
-              return (
-                <Pressable
-                  key={s}
-                  onPress={() => changeStatus(s)}
-                  style={[styles.statusChip, active && { backgroundColor: meta.bg, borderColor: meta.fg }]}
-                >
-                  <Text style={[styles.statusChipText, active && { color: meta.fg }]}>{meta.label}</Text>
-                </Pressable>
-              );
-            })}
+          <View style={styles.buttonRow}>
+            <Pressable onPress={() => setPreviewOpen(true)} style={({ pressed }) => [styles.secondary, pressed && { opacity: 0.85 }]}>
+              <Ionicons name="eye-outline" size={18} color={Colors.primary} />
+              <Text style={styles.secondaryText}>Preview</Text>
+            </Pressable>
+            <Pressable onPress={confirmIssue} style={({ pressed }) => [styles.issue, pressed && { opacity: 0.85 }]}>
+              <Ionicons name="checkmark-circle-outline" size={18} color={Colors.onPrimaryContainer} />
+              <Text style={styles.issueText}>Issue invoice</Text>
+            </Pressable>
           </View>
-          {invoice.paid_date && (
-            <Text style={styles.paidNote}>Marked paid on {invoice.paid_date}</Text>
-          )}
+          <Text style={styles.hint}>
+            Drafts carry no invoice number and can be edited freely. Issuing assigns the next
+            number in your {new Date().getMonth() >= 3 ? 'current' : ''} financial-year series and locks the invoice.
+          </Text>
         </View>
       }
+      after={preview}
     />
   );
 }
@@ -157,12 +253,10 @@ const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, backgroundColor: Colors.surface },
   errorText: { fontFamily: 'Manrope_500Medium', fontSize: 14, color: Colors.onSurfaceVariant, textAlign: 'center' },
   actions: { gap: 10 },
-  shareButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 14, backgroundColor: Colors.primary },
-  shareText: { fontFamily: 'Manrope_700Bold', fontSize: 14, color: Colors.onPrimaryContainer },
-  shareHint: { fontFamily: 'Manrope_400Regular', fontSize: 11, color: Colors.onSurfaceVariant, lineHeight: 16 },
-  statusLabel: { fontFamily: 'Manrope_600SemiBold', fontSize: 12, color: Colors.onSurfaceVariant, letterSpacing: 0.5, marginTop: 8 },
-  statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  statusChip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999, backgroundColor: Colors.surfaceContainerLow, borderWidth: 1, borderColor: 'transparent' },
-  statusChipText: { fontFamily: 'Manrope_600SemiBold', fontSize: 12, color: Colors.onSurfaceVariant },
-  paidNote: { fontFamily: 'Manrope_400Regular', fontSize: 11, color: Colors.onSurfaceVariant },
+  buttonRow: { flexDirection: 'row', gap: 10 },
+  secondary: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 14, backgroundColor: Colors.surfaceContainerHighest },
+  secondaryText: { fontFamily: 'Manrope_700Bold', fontSize: 14, color: Colors.primary },
+  issue: { flex: 1.4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 14, backgroundColor: Colors.primary },
+  issueText: { fontFamily: 'Manrope_700Bold', fontSize: 14, color: Colors.onPrimaryContainer },
+  hint: { fontFamily: 'Manrope_400Regular', fontSize: 11, color: Colors.onSurfaceVariant, lineHeight: 16 },
 });

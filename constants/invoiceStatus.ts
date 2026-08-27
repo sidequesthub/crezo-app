@@ -33,6 +33,12 @@ export const INVOICE_STATUSES: Record<InvoiceStatus, StatusMeta> = {
     fg: Colors.onPrimary,
     bg: Colors.primary,
   },
+  cancelled: {
+    label: 'Cancelled',
+    short: 'CANCELLED',
+    fg: Colors.error,
+    bg: 'rgba(147, 0, 10, 0.22)',
+  },
 };
 
 export function invoiceStatusMeta(s: string | null | undefined): StatusMeta {

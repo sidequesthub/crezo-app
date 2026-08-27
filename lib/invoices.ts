@@ -2,9 +2,26 @@ import { supabase } from './supabase';
 import { getCreatorId } from './contentSlots';
 import { calculateTax, type LineItem } from '@/constants/gst';
 
-export type InvoiceStatus = 'draft' | 'sent' | 'acknowledged' | 'paid';
+export type InvoiceStatus = 'draft' | 'sent' | 'acknowledged' | 'paid' | 'cancelled';
 
-export const INVOICE_STATUS_ORDER: InvoiceStatus[] = ['draft', 'sent', 'acknowledged', 'paid'];
+/** Stages an issued invoice moves through. Draft and cancelled sit outside it. */
+export const INVOICE_STATUS_ORDER: InvoiceStatus[] = ['sent', 'acknowledged', 'paid'];
+
+/** An issued invoice is a legal record and must not be edited in place. */
+export function isEditable(invoice: Invoice): boolean {
+  return invoice.status === 'draft';
+}
+
+export function isCancelled(invoice: Invoice): boolean {
+  return invoice.status === 'cancelled';
+}
+
+/** Display form: 2026-27/0001. Drafts have no number yet. */
+export function invoiceLabel(invoice: Invoice): string {
+  if (!invoice.invoice_number) return 'Draft';
+  const num = String(invoice.invoice_number).padStart(4, '0');
+  return invoice.financial_year ? `${invoice.financial_year}/${num}` : `INV-${num}`;
+}
 
 export interface Invoice {
   id: string;
@@ -12,6 +29,7 @@ export interface Invoice {
   deal_id: string | null;
   brand_id: string | null;
   invoice_number: number | null;
+  financial_year: string | null;
   invoice_date: string;
   due_date: string | null;
   line_items: LineItem[];
@@ -29,6 +47,10 @@ export interface Invoice {
   notes: string | null;
   sent_date: string | null;
   paid_date: string | null;
+  issued_at: string | null;
+  cancelled_at: string | null;
+  cancellation_reason: string | null;
+  replaces_invoice_id: string | null;
   brand: {
     id: string;
     name: string;
@@ -54,10 +76,11 @@ export interface InvoiceInput {
 }
 
 const SELECT = `
-  id, creator_id, deal_id, brand_id, invoice_number, invoice_date, due_date,
-  line_items, amount, gst_amount, cgst_amount, sgst_amount, igst_amount,
-  gst_rate, total, status, gstin, place_of_supply, sac_code, notes,
-  sent_date, paid_date,
+  id, creator_id, deal_id, brand_id, invoice_number, financial_year,
+  invoice_date, due_date, line_items, amount, gst_amount, cgst_amount,
+  sgst_amount, igst_amount, gst_rate, total, status, gstin, place_of_supply,
+  sac_code, notes, sent_date, paid_date, issued_at, cancelled_at,
+  cancellation_reason, replaces_invoice_id,
   brand:brands(id, name, gstin, address, state_code, email),
   deal:deals(id, title)
 `;
@@ -117,7 +140,7 @@ export async function createInvoice(
       igst_amount: t.igst,
       gst_rate: input.applyGst ? 18 : 0,
       total: t.total,
-      status: input.status ?? 'draft',
+      status: 'draft',
       gstin: supplierGstin,
       place_of_supply: input.place_of_supply ?? null,
       sac_code: input.sac_code ?? '998363',
@@ -160,6 +183,67 @@ export async function updateInvoice(
     .eq('id', id);
 
   if (error) throw new Error(error.message);
+}
+
+/**
+ * Issues a draft — assigns the next number in the financial-year series and
+ * makes the invoice immutable. Returns the assigned number.
+ */
+export async function issueInvoice(id: string): Promise<number> {
+  const { data, error } = await supabase.rpc('issue_invoice', { invoice_id: id });
+  if (error) throw new Error(error.message);
+  return Number(data);
+}
+
+/**
+ * Cancels an issued invoice. The number stays consumed so the series has no
+ * gaps, which is what GST requires.
+ */
+export async function cancelInvoice(id: string, reason: string): Promise<void> {
+  const { error } = await supabase.rpc('cancel_invoice', { invoice_id: id, reason });
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Cancels an invoice and opens a fresh draft carrying its details forward.
+ * This is the correct way to "fix" an issued invoice: the original stays on
+ * record as cancelled, and the replacement gets its own number when issued.
+ */
+export async function reviseInvoice(
+  creatorId: string,
+  original: Invoice,
+  reason: string,
+): Promise<Invoice> {
+  await cancelInvoice(original.id, reason);
+
+  const { data, error } = await supabase
+    .from('invoices')
+    .insert({
+      creator_id: creatorId,
+      deal_id: original.deal_id,
+      brand_id: original.brand_id,
+      invoice_date: original.invoice_date,
+      due_date: original.due_date,
+      line_items: original.line_items,
+      amount: original.amount,
+      gst_amount: original.gst_amount,
+      cgst_amount: original.cgst_amount,
+      sgst_amount: original.sgst_amount,
+      igst_amount: original.igst_amount,
+      gst_rate: original.gst_rate,
+      total: original.total,
+      status: 'draft',
+      gstin: original.gstin,
+      place_of_supply: original.place_of_supply,
+      sac_code: original.sac_code,
+      notes: original.notes,
+      replaces_invoice_id: original.id,
+    })
+    .select(SELECT)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return normalise([data])[0];
 }
 
 /** Status changes also stamp the matching date, which Home's revenue reads. */
@@ -251,6 +335,7 @@ function normalise(rows: unknown[] | null): Invoice[] {
       gst_rate: Number(r.gst_rate ?? 0),
       total: Number(r.total ?? 0),
       line_items: (r.line_items as LineItem[]) ?? [],
+      invoice_number: r.invoice_number ? Number(r.invoice_number) : null,
       brand: brand
         ? {
             id: String(brand.id),

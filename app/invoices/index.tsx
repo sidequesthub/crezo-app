@@ -6,7 +6,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
 import { FloatingActionButton } from '@/components/ui/FloatingActionButton';
 import { invoiceStatusMeta } from '@/constants/invoiceStatus';
-import { listInvoices, getCreatorId, type Invoice } from '@/lib/invoices';
+import { listInvoices, getCreatorId, invoiceLabel, type Invoice } from '@/lib/invoices';
 import { formatINR, formatINRFull } from '@/lib/format';
 import { fromISODate } from '@/lib/dates';
 
@@ -41,7 +41,7 @@ export default function InvoicesScreen() {
     let outstanding = 0;
     for (const i of invoices) {
       if (i.status === 'paid') paid += i.total;
-      else outstanding += i.total;
+      else if (i.status !== 'cancelled' && i.status !== 'draft') outstanding += i.total;
     }
     return { paid, outstanding };
   }, [invoices]);
@@ -111,9 +111,13 @@ export default function InvoicesScreen() {
 
 function InvoiceCard({ invoice, onPress }: { invoice: Invoice; onPress: () => void }) {
   const meta = invoiceStatusMeta(invoice.status);
-  const number = invoice.invoice_number ? `INV-${String(invoice.invoice_number).padStart(4, '0')}` : 'Draft';
+  const number = invoiceLabel(invoice);
   const overdue =
-    invoice.status !== 'paid' && invoice.due_date && fromISODate(invoice.due_date) < new Date();
+    invoice.status !== 'paid' &&
+    invoice.status !== 'cancelled' &&
+    invoice.status !== 'draft' &&
+    invoice.due_date &&
+    fromISODate(invoice.due_date) < new Date();
 
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>

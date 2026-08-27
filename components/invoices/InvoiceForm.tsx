@@ -28,10 +28,12 @@ interface Props {
   onDelete?: () => void;
   onClose: () => void;
   extra?: React.ReactNode;
+  /** Rendered outside the form — for modals that must sit above it. */
+  after?: React.ReactNode;
 }
 
 export function InvoiceForm({
-  heading, initial, creatorId, creator, submitLabel, onSubmit, onDelete, onClose, extra,
+  heading, initial, creatorId, creator, submitLabel, onSubmit, onDelete, onClose, extra, after,
 }: Props) {
   const [brandId, setBrandId] = useState<string | null>(initial.brand_id ?? null);
   const [invoiceDate, setInvoiceDate] = useState(initial.invoice_date);
@@ -318,6 +320,7 @@ export function InvoiceForm({
         selected={placeOfSupply}
         onPick={(k) => { setPlaceOfSupply(k); setStatePickerOpen(false); }}
       />
+      {after}
     </SafeAreaView>
   );
 }
