@@ -15,4 +15,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   },
 });
 
-export const BACKEND_URL = 'https://crezo-app.vercel.app';
+// Production API on the Oracle VM. Override with EXPO_PUBLIC_BACKEND_URL for local
+// development (scripts/dev.sh sets it to dev-api.crezo.studio).
+export const BACKEND_URL =
+  process.env.EXPO_PUBLIC_BACKEND_URL ?? 'https://api.crezo.studio';

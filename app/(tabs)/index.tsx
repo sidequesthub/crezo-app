@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,22 +8,34 @@ import {
   ActivityIndicator,
   RefreshControl,
   Image,
+  Animated,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Colors } from '@/constants/Colors';
+import { TAB_BAR_HEIGHT, FLOATING_GAP, MIN_BOTTOM_INSET } from '@/constants/Layout';
 import { supabase } from '@/lib/supabase';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { FloatingActionButton } from '@/components/ui/FloatingActionButton';
+import { toISODate, startOfDay, addDays, isSameDay } from '@/lib/dates';
+import { formatINR } from '@/lib/format';
+import { platformMeta } from '@/constants/content';
 
 const DAY_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+/** Keep in sync with styles.dayPill — used to snap the week strip. */
+const DAY_PILL_WIDTH = 62;
 
 interface WeekDay {
   label: string;
   date: number;
   isToday: boolean;
-  accent: 'primary' | 'secondary' | null;
+  /** Platforms scheduled that day — one dot each, capped when rendered. */
+  platforms: string[];
 }
 
 interface Deadline {
@@ -35,29 +47,23 @@ interface Deadline {
   kind: 'reel' | 'video' | 'story' | 'post' | 'other';
 }
 
-function getWeekDays(active: Set<number> = new Set([1, 3])): WeekDay[] {
-  const today = new Date();
-  const dow = today.getDay();
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - ((dow + 6) % 7));
+/**
+ * Monday-first week, with a dot per scheduled item on each day.
+ * `slotsByDate` maps `YYYY-MM-DD` to the platforms planned that day.
+ */
+function buildWeek(slotsByDate: Map<string, string[]>): WeekDay[] {
+  const today = startOfDay(new Date());
+  const monday = addDays(today, -((today.getDay() + 6) % 7));
 
   return Array.from({ length: 7 }).map((_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
+    const d = addDays(monday, i);
     return {
       label: DAY_LABELS[d.getDay()],
       date: d.getDate(),
-      isToday: d.toDateString() === today.toDateString(),
-      accent: active.has(i) ? (i === 1 ? 'secondary' : 'primary') : null,
+      isToday: isSameDay(d, today),
+      platforms: slotsByDate.get(toISODate(d)) ?? [],
     };
   });
-}
-
-function formatINR(amount: number): string {
-  if (amount >= 1e7) return `${(amount / 1e7).toFixed(1)}Cr`;
-  if (amount >= 1e5) return `${(amount / 1e5).toFixed(1)}L`;
-  if (amount >= 1e3) return `${(amount / 1e3).toFixed(1)}K`;
-  return amount.toLocaleString('en-IN');
 }
 
 function relativeTimeLabel(dueDate: string): { label: string; urgency: Deadline['urgency'] } {
@@ -87,6 +93,9 @@ function kindFor(platform?: string | null, type?: string | null): Deadline['kind
 }
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const scrollY = useRef(new Animated.Value(0)).current;
   const [userName, setUserName] = useState('Creator');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -96,12 +105,14 @@ export default function HomeScreen() {
   const [activeDeals, setActiveDeals] = useState(0);
   const [weekPosts, setWeekPosts] = useState(0);
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
-
-  const weekDays = getWeekDays();
+  const [weekDays, setWeekDays] = useState<WeekDay[]>(() => buildWeek(new Map()));
 
   const fetchDashboard = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // getSession() reads the persisted session locally; getUser() costs a
+      // network round trip to re-validate a token we already trust.
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) return;
 
       const meta = user.user_metadata ?? {};
@@ -126,14 +137,14 @@ export default function HomeScreen() {
       if (creator.name) setUserName(String(creator.name).split(' ')[0]);
       if (creator.avatar_url) setAvatarUrl(creator.avatar_url);
 
-      const now = new Date();
-      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 10);
-      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 10);
-      const weekStart = new Date(now);
-      weekStart.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 6);
+      // toISODate formats from local components. `toISOString()` converts to
+      // UTC first, which in IST rolls the date back a day at local midnight.
+      const now = startOfDay(new Date());
+      const thisMonthStart = toISODate(new Date(now.getFullYear(), now.getMonth(), 1));
+      const lastMonthStart = toISODate(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+      const lastMonthEnd = toISODate(new Date(now.getFullYear(), now.getMonth(), 0));
+      const weekStart = addDays(now, -((now.getDay() + 6) % 7));
+      const weekEnd = addDays(weekStart, 6);
 
       const [thisM, lastM, deals, week, upcoming] = await Promise.all([
         supabase
@@ -156,16 +167,17 @@ export default function HomeScreen() {
           .in('status', ['in_progress', 'confirmed', 'negotiating']),
         supabase
           .from('content_slots')
-          .select('id')
+          .select('id, scheduled_date, platform')
           .eq('creator_id', creator.id)
-          .gte('scheduled_date', weekStart.toISOString().slice(0, 10))
-          .lte('scheduled_date', weekEnd.toISOString().slice(0, 10)),
+          .gte('scheduled_date', toISODate(weekStart))
+          .lte('scheduled_date', toISODate(weekEnd)),
+        // Overdue items matter more than upcoming ones, so no lower bound on
+        // due_date — anything still pending shows, oldest first.
         supabase
           .from('deliverables')
           .select('id, title, type, platform, due_date, status, deal:deals(id, title, status, brand:brands(name))')
-          .eq('status', 'pending')
+          .neq('status', 'done')
           .not('due_date', 'is', null)
-          .gte('due_date', now.toISOString().slice(0, 10))
           .order('due_date', { ascending: true })
           .limit(5),
       ]);
@@ -176,7 +188,16 @@ export default function HomeScreen() {
       setMonthlyRevenue(sumTotal(thisM.data as never));
       setLastMonthRevenue(sumTotal(lastM.data as never));
       setActiveDeals(deals.data?.length ?? 0);
-      setWeekPosts(week.data?.length ?? 0);
+
+      const weekRows = (week.data ?? []) as { scheduled_date: string; platform: string }[];
+      setWeekPosts(weekRows.length);
+      const byDate = new Map<string, string[]>();
+      for (const r of weekRows) {
+        const list = byDate.get(r.scheduled_date);
+        if (list) list.push(r.platform);
+        else byDate.set(r.scheduled_date, [r.platform]);
+      }
+      setWeekDays(buildWeek(byDate));
 
       type DeliverableRow = {
         id: string;
@@ -233,15 +254,25 @@ export default function HomeScreen() {
       ? Math.round(((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100)
       : 0;
 
+  // Clear the tab bar only. The action button is a corner FAB and floats over
+  // content by design — reserving its height leaves dead space at the end.
+  const scrollBottomInset =
+    Math.max(insets.bottom, MIN_BOTTOM_INSET) + TAB_BAR_HEIGHT + FLOATING_GAP;
+
   return (
     <View style={styles.container}>
-      {/* Fixed blurred top app bar, matching the design */}
-      <TopAppBar userName={userName} avatarUrl={avatarUrl} />
+      {/* Blurred top app bar — its backdrop fades in as the content scrolls under it */}
+      <TopAppBar userName={userName} avatarUrl={avatarUrl} scrollY={scrollY} />
 
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
+        <Animated.ScrollView
+          contentContainerStyle={{ paddingBottom: scrollBottomInset }}
           showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true },
+          )}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -302,6 +333,9 @@ export default function HomeScreen() {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                decelerationRate="fast"
+                snapToInterval={DAY_PILL_WIDTH + 10}
+                snapToAlignment="start"
                 contentContainerStyle={styles.weekStrip}
               >
                 {weekDays.map((d, i) => (
@@ -319,12 +353,14 @@ export default function HomeScreen() {
               </View>
             </>
           )}
-
-          <View style={{ height: 180 }} />
-        </ScrollView>
+        </Animated.ScrollView>
       </SafeAreaView>
 
-      <FloatingActionBar />
+      <FloatingActionButton
+        bottom={scrollBottomInset}
+        accessibilityLabel="Plan content"
+        onPress={() => router.push(`/content/new?date=${toISODate(new Date())}`)}
+      />
     </View>
   );
 }
@@ -333,9 +369,31 @@ export default function HomeScreen() {
 /* Header                                                                      */
 /* -------------------------------------------------------------------------- */
 
-function TopAppBar({ userName, avatarUrl }: { userName: string; avatarUrl: string | null }) {
+function TopAppBar({
+  userName,
+  avatarUrl,
+  scrollY,
+}: {
+  userName: string;
+  avatarUrl: string | null;
+  scrollY: Animated.Value;
+}) {
+  // Transparent at rest so the content reads as one surface; the blur fades in
+  // only once something has scrolled underneath it.
+  const backdropOpacity = scrollY.interpolate({
+    inputRange: [0, 48],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
   return (
-    <BlurView intensity={50} tint="dark" style={styles.appBar}>
+    <View style={styles.appBar}>
+      <Animated.View
+        pointerEvents="none"
+        style={[StyleSheet.absoluteFill, { opacity: backdropOpacity }]}
+      >
+        <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} />
+      </Animated.View>
       <SafeAreaView edges={['top']}>
         <View style={styles.appBarContent}>
           <View style={styles.appBarLeft}>
@@ -364,7 +422,7 @@ function TopAppBar({ userName, avatarUrl }: { userName: string; avatarUrl: strin
           </View>
         </View>
       </SafeAreaView>
-    </BlurView>
+    </View>
   );
 }
 
@@ -431,17 +489,12 @@ function DayPill({ day }: { day: WeekDay }) {
         {day.date}
       </Text>
       <View style={styles.dayPillDotRow}>
-        {day.accent && (
+        {day.platforms.slice(0, 3).map((p, i) => (
           <View
-            style={[
-              styles.dayPillDot,
-              {
-                backgroundColor:
-                  day.accent === 'primary' ? Colors.primary : Colors.secondaryContainer,
-              },
-            ]}
+            key={i}
+            style={[styles.dayPillDot, { backgroundColor: platformMeta(p).tint }]}
           />
-        )}
+        ))}
       </View>
     </View>
   );
@@ -540,49 +593,7 @@ function SectionHeader({ title, linkLabel }: { title: string; linkLabel?: string
 /* Floating Quick Action Bar                                                   */
 /* -------------------------------------------------------------------------- */
 
-function FloatingActionBar() {
-  return (
-    <View pointerEvents="box-none" style={styles.fabHost}>
-      <BlurView intensity={40} tint="dark" style={styles.fabBar}>
-        <Pressable style={({ pressed }) => [styles.fabPrimary, pressed && { opacity: 0.9 }]}>
-          <LinearGradient
-            colors={['#ADC6FF', '#4B8EFF']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.fabPrimaryBg}
-          >
-            <Ionicons name="add-circle" size={16} color={Colors.onPrimaryContainer} />
-            <Text style={styles.fabPrimaryText}>New Deal</Text>
-          </LinearGradient>
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.fabSecondary,
-            { backgroundColor: Colors.secondaryContainer },
-            pressed && { opacity: 0.85 },
-          ]}
-        >
-          <Ionicons name="receipt" size={16} color={Colors.onSecondaryContainer} />
-          <Text style={[styles.fabSecondaryText, { color: Colors.onSecondaryContainer }]}>
-            Invoice
-          </Text>
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.fabSecondary,
-            { backgroundColor: Colors.surfaceContainerHighest },
-            pressed && { opacity: 0.85 },
-          ]}
-        >
-          <Ionicons name="images" size={16} color={Colors.onSurface} />
-          <Text style={[styles.fabSecondaryText, { color: Colors.onSurface }]}>Media</Text>
-        </Pressable>
-      </BlurView>
-    </View>
-  );
-}
+/* The floating action lives in components/ui/FloatingActionButton. */
 
 /* -------------------------------------------------------------------------- */
 /* Styles                                                                      */
@@ -591,7 +602,6 @@ function FloatingActionBar() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.surface },
   safe: { flex: 1 },
-  scrollContent: { paddingBottom: 32 },
   loadingBlock: { paddingVertical: 64, alignItems: 'center' },
 
   /* Top app bar */
@@ -601,9 +611,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 10,
-    backgroundColor: 'rgba(19, 19, 19, 0.6)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(193, 198, 215, 0.06)',
+    // No background or border here — the backdrop is an animated layer inside
+    // TopAppBar. A permanent hairline would also break the design system's
+    // "no-line" rule.
   },
   appBarContent: {
     flexDirection: 'row',
@@ -734,7 +744,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   dayPill: {
-    width: 62,
+    width: DAY_PILL_WIDTH,
     paddingVertical: 12,
     paddingHorizontal: 10,
     borderRadius: 20,
@@ -859,57 +869,4 @@ const styles = StyleSheet.create({
     maxWidth: 260,
   },
 
-  /* Floating action bar */
-  fabHost: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 98,
-    alignItems: 'center',
-    zIndex: 20,
-  },
-  fabBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    padding: 6,
-    borderRadius: 999,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(20, 20, 20, 0.75)',
-    borderWidth: 1,
-    borderColor: 'rgba(193, 198, 215, 0.08)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  fabPrimary: { borderRadius: 999, overflow: 'hidden' },
-  fabPrimaryBg: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 999,
-  },
-  fabPrimaryText: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 13,
-    color: Colors.onPrimaryContainer,
-    letterSpacing: 0.1,
-  },
-  fabSecondary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 999,
-  },
-  fabSecondaryText: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 13,
-    letterSpacing: 0.1,
-  },
 });

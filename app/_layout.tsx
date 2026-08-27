@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Slot, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import {
@@ -62,7 +62,29 @@ export default function RootLayout() {
 
   return (
     <>
-      <Slot />
+      {/* A Stack (not a Slot) so pushed routes get native transitions and the
+          iOS back-swipe; content routes present as sheets over the tabs. */}
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: Colors.surface },
+        }}
+      >
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="content/new" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="content/[id]" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="deal/new" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="deal/[id]" options={{ presentation: 'modal' }} />
+        {/* Vault browsing pushes rather than presenting — it's navigation, not a form. */}
+        <Stack.Screen name="vault/[id]" />
+        <Stack.Screen name="vault/album/[albumId]" />
+        <Stack.Screen name="settings/profile" />
+        <Stack.Screen name="settings/payment" />
+        <Stack.Screen name="settings/notifications" />
+        <Stack.Screen name="settings/privacy" />
+        <Stack.Screen name="settings/support" />
+      </Stack>
       <StatusBar style="light" />
     </>
   );

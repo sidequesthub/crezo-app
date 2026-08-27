@@ -11,22 +11,38 @@
       "bundleIdentifier": "com.crezo.crezoApp",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#131313"
       },
-      "package": "com.crezo.crezoApp"
+      "package": "com.crezo.crezoApp",
+      "permissions": [
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO"
+      ],
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro",
-      "output": "single"
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Crezo shows your camera roll so you can organise clips into folders. Your media stays on your device \u2014 Crezo never uploads or moves it.",
+          "savePhotosPermission": "Crezo needs this only if you choose to export a folder as an album in your Photos app.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ]
     ],
     "extra": {
       "router": {},
@@ -34,6 +50,12 @@
         "projectId": "1d691ae0-5d08-4135-a8ac-0fa3292ccee3"
       }
     },
-    "owner": "jnvtarun"
+    "owner": "jnvtarun",
+    "icon": "./assets/images/icon.png",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#131313"
+    }
   }
 }
