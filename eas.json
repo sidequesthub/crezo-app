@@ -40,7 +40,7 @@
     "production": {
       "ios": {
         "appleId": "tarunj12@gmail.com",
-        "ascAppId": "REPLACE_WITH_APP_STORE_CONNECT_APP_ID",
+        "ascAppId": "6811693050",
         "appleTeamId": "4Y2ZCJ5GWA"
       },
       "android": {
