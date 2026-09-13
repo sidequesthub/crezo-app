@@ -34,8 +34,7 @@
         "buildType": "app-bundle"
       },
       "node": "22.20.0"
-    },
-    "base": {}
+    }
   },
   "submit": {
     "production": {
