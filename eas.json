@@ -39,9 +39,11 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "tarunj12@gmail.com",
         "ascAppId": "6811693050",
-        "appleTeamId": "4Y2ZCJ5GWA"
+        "appleTeamId": "4Y2ZCJ5GWA",
+        "ascApiKeyPath": "/Users/tarunjuluru/.appstoreconnect/private_keys/AuthKey_XGWA6KDQLB.p8",
+        "ascApiKeyId": "XGWA6KDQLB",
+        "ascApiKeyIssuerId": "de371056-8429-4adf-9039-92b55fa3daa9"
       },
       "android": {
         "serviceAccountKeyPath": "./play-service-account.json",
