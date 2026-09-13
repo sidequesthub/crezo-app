@@ -1,4 +1,7 @@
-import * as MediaLibrary from 'expo-media-library';
+// SDK 57 rewrote this module's API. The previous one is still shipped at
+// /legacy and is what the vault is written against; migrating to the new
+// asset-object API is a separate piece of work.
+import * as MediaLibrary from 'expo-media-library/legacy';
 
 /**
  * Read-only access to the device's photo library.
