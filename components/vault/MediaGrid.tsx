@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   },
   image: { flex: 1 },
   selectedOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderWidth: 2.5,
     borderColor: Colors.primary,
     borderRadius: 4,

@@ -58,6 +58,6 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   glowWrap: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
 });
