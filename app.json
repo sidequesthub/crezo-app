@@ -63,6 +63,13 @@
       }
     },
     "owner": "jnvtarun",
-    "icon": "./assets/images/icon.png"
+    "icon": "./assets/images/icon.png",
+    "updates": {
+      "url": "https://u.expo.dev/1d691ae0-5d08-4135-a8ac-0fa3292ccee3",
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }
