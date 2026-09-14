@@ -16,6 +16,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as QueryParams from 'expo-auth-session/build/QueryParams';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/Colors';
+import { Wordmark } from '@/components/brand/Wordmark';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -60,7 +61,7 @@ export default function LoginScreen() {
       <AmbientGlow />
 
       <View style={styles.header}>
-        <Text style={styles.logo}>Crezo</Text>
+        <Wordmark size={22} />
       </View>
 
       <View style={styles.content}>
@@ -184,12 +185,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 8,
-  },
-  logo: {
-    fontFamily: 'PlusJakartaSans_800ExtraBold',
-    fontSize: 22,
-    color: Colors.onSurface,
-    letterSpacing: -0.5,
   },
   content: {
     flex: 1,

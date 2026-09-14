@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
+import { Wordmark } from '@/components/brand/Wordmark';
 import { sendOtp, resendOtp, verifyOtp } from '@/lib/phoneAuth';
 
 const OTP_LENGTH = 6;
@@ -132,7 +133,7 @@ export default function OtpScreen() {
           <Pressable onPress={handleBack} style={styles.iconButton} hitSlop={8}>
             <Ionicons name="arrow-back" size={22} color={Colors.onSurface} />
           </Pressable>
-          <Text style={styles.logo}>Crezo</Text>
+          <Wordmark size={20} />
           <View style={styles.iconButton} />
         </View>
 
@@ -315,12 +316,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
-  },
-  logo: {
-    fontFamily: 'PlusJakartaSans_800ExtraBold',
-    fontSize: 20,
-    color: Colors.onSurface,
-    letterSpacing: -0.4,
   },
   content: {
     flex: 1,

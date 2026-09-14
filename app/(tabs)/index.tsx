@@ -17,6 +17,7 @@ import { useRouter } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Colors } from '@/constants/Colors';
+import { Wordmark } from '@/components/brand/Wordmark';
 import { TAB_BAR_HEIGHT, FLOATING_GAP, MIN_BOTTOM_INSET } from '@/constants/Layout';
 import { supabase } from '@/lib/supabase';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -442,7 +443,7 @@ function TopAppBar({
             >
               <Ionicons name="notifications-outline" size={22} color={Colors.primary} />
             </Pressable>
-            <Text style={styles.brandMark}>Crezo</Text>
+            <Wordmark size={20} />
           </View>
         </View>
       </SafeAreaView>
@@ -716,13 +717,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(75, 142, 255, 0.08)',
-  },
-  brandMark: {
-    fontFamily: 'PlusJakartaSans_800ExtraBold',
-    fontSize: 20,
-    color: Colors.primary,
-    fontStyle: 'italic',
-    letterSpacing: -0.8,
   },
 
   /* Stats */
