@@ -12,12 +12,12 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "6"
+      "buildNumber": "7"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#0D0E11"
+        "backgroundColor": "#0B0C0E"
       },
       "package": "com.crezo.crezoApp",
       "permissions": [
