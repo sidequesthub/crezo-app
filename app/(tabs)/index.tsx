@@ -40,6 +40,8 @@ interface WeekDay {
 
 interface Deadline {
   id: string;
+  /** The deal this deliverable belongs to, for navigation. */
+  dealId: string | null;
   brand: string;
   detail: string;
   timeLabel: string;
@@ -206,8 +208,8 @@ export default function HomeScreen() {
         platform: string | null;
         due_date: string;
         deal:
-          | { brand: { name?: string | null } | { name?: string | null }[] | null }
-          | { brand: { name?: string | null } | { name?: string | null }[] | null }[]
+          | { id?: string; brand: { name?: string | null } | { name?: string | null }[] | null }
+          | { id?: string; brand: { name?: string | null } | { name?: string | null }[] | null }[]
           | null;
       };
       const rows = (upcoming.data ?? []) as unknown as DeliverableRow[];
@@ -224,6 +226,7 @@ export default function HomeScreen() {
           kind === 'post' ? 'Post' : 'Task';
         return {
           id: d.id,
+          dealId: deal ? String((deal as { id?: string }).id ?? '') || null : null,
           brand: `${brand} (${kindLabel})`,
           detail: d.title ?? 'Deliverable',
           timeLabel: t.label,
@@ -303,6 +306,7 @@ export default function HomeScreen() {
                         : `${revenueDelta}% FROM LAST MONTH`
                   }
                   accent="primary"
+                  onPress={() => router.push('/invoices')}
                 />
                 <StatCard
                   label="Active Deals"
@@ -315,6 +319,7 @@ export default function HomeScreen() {
                   footerText="HIGH PRIORITY PIPELINE"
                   accent="secondary"
                   footerMci
+                  onPress={() => router.push('/(tabs)/deals')}
                 />
                 <StatCard
                   label="Content Velocity"
@@ -326,10 +331,15 @@ export default function HomeScreen() {
                   footerIcon="document-text"
                   footerText="POSTS THIS WEEK"
                   accent="neutral"
+                  onPress={() => router.push('/(tabs)/calendar')}
                 />
               </View>
 
-              <SectionHeader title="This Week" linkLabel="View Calendar" />
+              <SectionHeader
+                title="This Week"
+                linkLabel="View Calendar"
+                onPressLink={() => router.push('/(tabs)/calendar')}
+              />
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -339,14 +349,28 @@ export default function HomeScreen() {
                 contentContainerStyle={styles.weekStrip}
               >
                 {weekDays.map((d, i) => (
-                  <DayPill key={i} day={d} />
+                  <DayPill
+                    key={i}
+                    day={d}
+                    onPress={() => router.push('/(tabs)/calendar')}
+                  />
                 ))}
               </ScrollView>
 
-              <SectionHeader title="Upcoming Deadlines" />
+              <SectionHeader
+                title="Upcoming Deadlines"
+                linkLabel="View Deals"
+                onPressLink={() => router.push('/(tabs)/deals')}
+              />
               <View style={styles.deadlineList}>
                 {deadlines.length > 0 ? (
-                  deadlines.map((d) => <DeadlineRow key={d.id} item={d} />)
+                  deadlines.map((d) => (
+                    <DeadlineRow
+                      key={d.id}
+                      item={d}
+                      onPress={d.dealId ? () => router.push(`/deal/${d.dealId}`) : undefined}
+                    />
+                  ))
                 ) : (
                   <EmptyDeadlines />
                 )}
@@ -437,6 +461,7 @@ function StatCard({
   footerIcon,
   footerMci,
   accent,
+  onPress,
 }: {
   label: string;
   value: React.ReactNode;
@@ -444,13 +469,14 @@ function StatCard({
   footerIcon: string;
   footerMci?: boolean;
   accent: 'primary' | 'secondary' | 'neutral';
+  onPress?: () => void;
 }) {
   const color =
     accent === 'primary' ? Colors.primary :
     accent === 'secondary' ? Colors.secondary :
     Colors.onSurfaceVariant;
 
-  return (
+  const card = (
     <GlassCard glow={accent} padding={20}>
       <Text style={styles.statLabel}>{label}</Text>
       <View style={styles.valueRow}>{value}</View>
@@ -463,6 +489,14 @@ function StatCard({
         <Text style={[styles.statFooterText, { color }]}>{footerText}</Text>
       </View>
     </GlassCard>
+  );
+
+  if (!onPress) return card;
+
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => pressed && { opacity: 0.85 }}>
+      {card}
+    </Pressable>
   );
 }
 
@@ -479,9 +513,16 @@ function CurrencyValue({ rupees, color }: { rupees: number; color: string }) {
 /* This Week                                                                   */
 /* -------------------------------------------------------------------------- */
 
-function DayPill({ day }: { day: WeekDay }) {
+function DayPill({ day, onPress }: { day: WeekDay; onPress?: () => void }) {
   return (
-    <View style={[styles.dayPill, day.isToday && styles.dayPillToday]}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.dayPill,
+        day.isToday && styles.dayPillToday,
+        pressed && { opacity: 0.75 },
+      ]}
+    >
       <Text style={[styles.dayPillLabel, day.isToday && styles.dayPillLabelToday]}>
         {day.label}
       </Text>
@@ -496,7 +537,7 @@ function DayPill({ day }: { day: WeekDay }) {
           />
         ))}
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -512,7 +553,7 @@ const DEADLINE_ICON: Record<Deadline['kind'], string> = {
   other: 'document-outline',
 };
 
-function DeadlineRow({ item }: { item: Deadline }) {
+function DeadlineRow({ item, onPress }: { item: Deadline; onPress?: () => void }) {
   const accentColor =
     item.urgency === 'error' ? Colors.error :
     item.urgency === 'secondary' ? Colors.secondary :
@@ -524,7 +565,11 @@ function DeadlineRow({ item }: { item: Deadline }) {
     'On track';
 
   return (
-    <View style={styles.deadlineRow}>
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      style={({ pressed }) => [styles.deadlineRow, pressed && { opacity: 0.85 }]}
+    >
       <View style={[styles.deadlineAccent, { backgroundColor: accentColor }]} />
       <View style={styles.deadlineIcon}>
         <Ionicons
@@ -552,7 +597,7 @@ function DeadlineRow({ item }: { item: Deadline }) {
           {urgencyText}
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -576,12 +621,20 @@ function EmptyDeadlines() {
 /* Section header                                                              */
 /* -------------------------------------------------------------------------- */
 
-function SectionHeader({ title, linkLabel }: { title: string; linkLabel?: string }) {
+function SectionHeader({
+  title,
+  linkLabel,
+  onPressLink,
+}: {
+  title: string;
+  linkLabel?: string;
+  onPressLink?: () => void;
+}) {
   return (
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionTitle}>{title}</Text>
-      {linkLabel && (
-        <Pressable>
+      {linkLabel && onPressLink && (
+        <Pressable onPress={onPressLink} hitSlop={8}>
           <Text style={styles.sectionLink}>{linkLabel}</Text>
         </Pressable>
       )}
