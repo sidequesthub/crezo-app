@@ -99,7 +99,12 @@ likely first case).
 
 ## Auth
 
-Phone OTP only, and it is **not** stock Supabase auth:
+**Google OAuth is the only live sign-in** (decided 2026-09-16). The phone-OTP
+path below is fully built but inactive: it is blocked on TRAI DLT registration,
+so the MSG91 env vars are unset and the flow cannot send an SMS. Don't describe
+phone login as available.
+
+The phone path, when it is switched on, is **not** stock Supabase auth:
 
 ```
 app → POST /api/auth/otp/send    → MSG91 sends SMS
@@ -184,6 +189,71 @@ and a reload. Quick tunnels are unauthenticated — don't leave them running.
 Local iOS device builds currently fail: Xcode 26.4 has no developer disk image
 for iOS 26.5.2. Use Expo Go, or EAS (`eas.json` has a `development-device`
 profile, but no Apple team is linked to the Expo account yet).
+
+---
+
+## Deferred
+
+Decided and parked, with the reason — not a wishlist. Newest first.
+
+### Auth (2026-09-16)
+
+- **Ship Google-only for now.** Phone OTP costs ~₹5,900 and 1–2 weeks of DLT
+  approval, and internal TestFlight testing does not need it. Google also
+  supplies name and avatar, which is what lets onboarding be zero screens.
+- **Sign in with Apple, before public App Store release.** App Store guideline
+  4.8 generally requires an equivalent private login option once you offer
+  Google. TestFlight internal does not enforce it; public review usually does.
+  Far less work than DLT — do it first.
+- **Phone OTP** needs, in order: DLT entity on Jio TrueConnect → header
+  `CREZOA` (Service Implicit, not Transactional — that is banking-only) →
+  content template → link in MSG91. Then set `MSG91_AUTH_KEY`,
+  `MSG91_TEMPLATE_ID`, `MSG91_SENDER_ID` on the Oracle backend.
+  **Check Firebase Phone Auth first** — Google runs its own DLT templates, so it
+  may skip the fee and the wait, at the cost of reworking this backend.
+- **Account linking must land before phone OTP goes live.** Signing in with
+  Google and later with a phone creates *two* `auth.users` rows and therefore
+  two `creators` rows. Cheap to fix now while the user count is tiny.
+- The `listUsers({ perPage: 200 })` ceiling in `upsertSupabaseUser` breaks
+  silently past 200 users. Fix before any real signup volume.
+
+### Onboarding (designed 2026-09-14, not built)
+
+- **Zero screens for Google users.** `handle_new_user()` already fills name,
+  email and phone from the OAuth metadata, so asking again is a wasted tap.
+- A **name screen only for phone users**, since their name falls back to the
+  phone number or the literal `Creator`.
+- **No handle field** — `creators` has no such column and nothing reads one.
+  Same for `niche`: the column exists, nothing consumes it.
+- **Day-one Home is a checklist, not zeros**, ticked off from real data (a deal
+  exists, a content slot exists, billing details filled) — no separate flag.
+- **Invoice details asked just-in-time**, when Create invoice is first tapped:
+  PAN, address, state code, bank/UPI, GSTIN if registered. Too much for signup,
+  useless before the first invoice. Same for permissions — photos on first Vault
+  open, notifications after the first deal with a deadline.
+- No feature tour/carousel.
+
+### Media kit (specified 2026-09-16, not built)
+
+Public page at `crezo.studio/<slug>` on the `crezo-landing` Next.js site
+(Vercel, already serving `/privacy` and `/support`).
+
+- **Static = a published snapshot.** Edits are drafts; "Update link" republishes.
+  The public page reads only the snapshot, never `creators` — so bank, PAN,
+  GSTIN and phone cannot leak through an RLS mistake.
+- Auto-filled: name, avatar, bio, niche; brands from delivered/paid deals
+  (creator picks which — NDAs), platforms from deliverables. **Never deal values.**
+- Manual: platform handles + follower counts, rates (hidden by default), contact.
+- **Vault photos cannot appear** — vault media stays on the device and is never
+  uploaded. Showing work samples means an upload path first. v2.
+- **Follower counts are typed by hand.** Auto-sync needs Meta app review.
+- `creators.media_kit_url` already exists and is unused.
+- Open decisions: `crezo.studio/<slug>` vs `/kit/<slug>`; whether rates ship in v1.
+
+### Before public rollout
+
+- Subscriptions / IAP — no libraries installed; the Paid Applications Agreement
+  has its own lead time.
 
 ---
 
