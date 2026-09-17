@@ -67,8 +67,8 @@ function TabItem({
     Animated.spring(focus, {
       toValue: isFocused ? 1 : 0,
       useNativeDriver: true,
-      speed: 18,
-      bounciness: 6,
+      speed: 12,
+      bounciness: 8,
     }).start();
   }, [isFocused, focus]);
 
@@ -143,10 +143,12 @@ export default function TabLayout() {
         // Without this the navigator's default is 'none', which is why switching
         // tabs was instantaneous. 'shift' slides the outgoing/incoming screens a
         // little in the direction of travel, so the move reads as a direction.
+        // 220ms turned out to be too quick to register as motion at all; 320
+        // is still snappy but unmistakably a transition.
         animation: 'shift',
         transitionSpec: {
           animation: 'timing',
-          config: { duration: 220, easing: Easing.out(Easing.cubic) },
+          config: { duration: 320, easing: Easing.out(Easing.cubic) },
         },
       }}
     >

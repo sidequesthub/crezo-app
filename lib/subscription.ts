@@ -13,23 +13,39 @@ import { getCreatorId } from '@/lib/contentSlots';
  *    loaded lazily so the app still runs in Expo Go, just without purchasing.
  */
 
+/**
+ * A plan code, not a boolean. There will be more tiers than one, and a
+ * `isPro` flag would have to be unpicked from every screen the day a second
+ * paid plan exists. `features` is the resolved capability set: the plan's
+ * defaults with any per-creator override applied on top.
+ */
 export interface Entitlement {
-  isPro: boolean;
+  plan: string;                       // 'free', 'pro', … — a row in `plans`
   source: 'subscription' | 'grant' | 'none';
   expiresAt: string | null;
+  features: Record<string, unknown>;
 }
 
-export const FREE: Entitlement = { isPro: false, source: 'none', expiresAt: null };
+export const FREE: Entitlement = {
+  plan: 'free', source: 'none', expiresAt: null, features: {},
+};
 
 export async function getEntitlement(): Promise<Entitlement> {
   const { data, error } = await supabase.rpc('my_entitlement');
   if (error || !data?.length) return FREE;
   const row = data[0];
   return {
-    isPro: !!row.is_pro,
+    plan: row.plan ?? 'free',
     source: (row.source ?? 'none') as Entitlement['source'],
     expiresAt: row.expires_at ?? null,
+    features: (row.features ?? {}) as Record<string, unknown>,
   };
+}
+
+/** Reads one capability, with a fallback for when the plan doesn't define it. */
+export function can<T>(e: Entitlement, feature: string, fallback: T): T {
+  const v = e.features[feature];
+  return v === undefined ? fallback : (v as T);
 }
 
 // ---------------------------------------------------------------- purchases
