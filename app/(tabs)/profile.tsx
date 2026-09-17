@@ -9,22 +9,25 @@ import { supabase } from '@/lib/supabase';
 import { clearSession } from '@/lib/phoneAuth';
 import { clearCreatorCache } from '@/lib/contentSlots';
 import { getProfile, getProfileStats, type CreatorProfile } from '@/lib/profile';
+import { getMyMediaKit, type MediaKit } from '@/lib/mediaKit';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [profile, setProfile] = useState<CreatorProfile | null>(null);
   const [stats, setStats] = useState({ deals: 0, content: 0, folders: 0 });
+  const [kit, setKit] = useState<MediaKit | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       getProfile().then(setProfile).catch(() => undefined);
       getProfileStats().then(setStats).catch(() => undefined);
+      getMyMediaKit().then(setKit).catch(() => undefined);
     }, []),
   );
 
   function signOut() {
-    Alert.alert('Sign out?', 'You’ll need an OTP to sign back in.', [
+    Alert.alert('Sign out?', 'You’ll sign back in with Google.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Sign out',
@@ -45,6 +48,16 @@ export default function ProfileScreen() {
   const displayName = profile?.name ?? 'Creator';
   const initial = displayName.charAt(0).toUpperCase();
   const hasPaymentDetails = Boolean(profile?.upi_id || profile?.bank_account_number);
+
+  // Surfaces the state that needs action: never created, or edited but not
+  // republished — so the row itself says whether the public page is stale.
+  const kitDetail = !kit
+    ? 'Not created'
+    : kit.hasUnpublishedChanges
+      ? 'Unpublished changes'
+      : kit.isLive
+        ? undefined
+        : 'Hidden';
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -89,6 +102,12 @@ export default function ProfileScreen() {
             icon="receipt-outline"
             label="Invoices"
             onPress={() => router.push('/invoices')}
+          />
+          <Row
+            icon="link-outline"
+            label="Media kit"
+            detail={kitDetail}
+            onPress={() => router.push('/settings/mediakit')}
           />
           <Row
             icon="card-outline"
