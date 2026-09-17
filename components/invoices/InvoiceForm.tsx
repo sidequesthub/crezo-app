@@ -9,7 +9,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
 import {
   calculateTax, stateCodeFromGstin, stateName, STATE_OPTIONS,
-  lineTotal, type LineItem,
+  lineTotal, GST_RATE, type LineItem,
 } from '@/constants/gst';
 import { listBrandOptions, type InvoiceInput } from '@/lib/invoices';
 import { formatINRFull } from '@/lib/format';
@@ -199,7 +199,7 @@ export function InvoiceForm({
           <Field label="Tax">
             <View style={styles.gstRow}>
               <View style={styles.gstBody}>
-                <Text style={styles.gstLabel}>Charge GST at 18%</Text>
+                <Text style={styles.gstLabel}>Charge GST at {GST_RATE}%</Text>
                 <Text style={styles.gstHint}>
                   {creator?.gst_number
                     ? `Your GSTIN ${creator.gst_number}`
@@ -276,9 +276,9 @@ export function InvoiceForm({
 
           <View style={styles.totals}>
             <TotalRow label="Subtotal" value={totals.subtotal} />
-            {totals.cgst > 0 && <TotalRow label="CGST @ 9%" value={totals.cgst} />}
-            {totals.sgst > 0 && <TotalRow label="SGST @ 9%" value={totals.sgst} />}
-            {totals.igst > 0 && <TotalRow label="IGST @ 18%" value={totals.igst} />}
+            {totals.cgst > 0 && <TotalRow label={`CGST @ ${GST_RATE / 2}%`} value={totals.cgst} />}
+            {totals.sgst > 0 && <TotalRow label={`SGST @ ${GST_RATE / 2}%`} value={totals.sgst} />}
+            {totals.igst > 0 && <TotalRow label={`IGST @ ${GST_RATE}%`} value={totals.igst} />}
             <View style={styles.grandRow}>
               <Text style={styles.grandLabel}>Total</Text>
               <Text style={styles.grandValue}>₹{formatINRFull(totals.total)}</Text>
