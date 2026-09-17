@@ -17,3 +17,6 @@ web-build/
 
 # Google Play service-account key (credential)
 play-service-account.json
+
+# Supabase CLI scratch
+supabase/.temp/

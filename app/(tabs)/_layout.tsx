@@ -1,5 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { Tabs } from 'expo-router';
-import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform, Animated, Easing } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -39,9 +40,60 @@ const TAB_ICONS: Record<string, { label: string; active: IconSpec; inactive: Ico
   },
 };
 
+const INACTIVE = Colors.tertiaryFixedDim + 'AA';
+
 function TabIcon({ spec, color, size = 22 }: { spec: IconSpec; color: string; size?: number }) {
   if (spec.set === 'ion') return <Ionicons name={spec.name} size={size} color={color} />;
   return <MaterialCommunityIcons name={spec.name} size={size} color={color} />;
+}
+
+/**
+ * One tab. The selected pill fades in and the icon lifts slightly rather than
+ * snapping, so the bar moves with the screen transition instead of jumping
+ * ahead of it. Opacity and transform only — both run on the native driver.
+ */
+function TabItem({
+  spec,
+  isFocused,
+  onPress,
+}: {
+  spec: { label: string; active: IconSpec; inactive: IconSpec };
+  isFocused: boolean;
+  onPress: () => void;
+}) {
+  const focus = useRef(new Animated.Value(isFocused ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.spring(focus, {
+      toValue: isFocused ? 1 : 0,
+      useNativeDriver: true,
+      speed: 18,
+      bounciness: 6,
+    }).start();
+  }, [isFocused, focus]);
+
+  const lift = focus.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] });
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={isFocused ? { selected: true } : {}}
+      onPress={onPress}
+      style={({ pressed }) => [styles.tab, pressed && styles.tabPressed]}
+    >
+      <Animated.View style={[styles.pill, { opacity: focus }]} pointerEvents="none" />
+      <Animated.View style={[styles.tabInner, { transform: [{ scale: lift }] }]}>
+        <TabIcon
+          spec={isFocused ? spec.active : spec.inactive}
+          color={isFocused ? Colors.primary : INACTIVE}
+          size={22}
+        />
+        <Text style={[styles.label, { color: isFocused ? Colors.primary : INACTIVE }]}>
+          {spec.label}
+        </Text>
+      </Animated.View>
+    </Pressable>
+  );
 }
 
 function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
@@ -52,52 +104,28 @@ function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
       pointerEvents="box-none"
       style={[styles.host, { paddingBottom: Math.max(insets.bottom, 12) }]}
     >
-      <BlurView
-        intensity={Platform.OS === 'ios' ? 50 : 80}
-        tint="dark"
-        style={styles.bar}
-      >
+      <BlurView intensity={Platform.OS === 'ios' ? 50 : 80} tint="dark" style={styles.bar}>
         {state.routes.map((route, i) => {
           const spec = TAB_ICONS[route.name];
           if (!spec) return null;
           const isFocused = state.index === i;
-          const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name as never);
-            }
-          };
 
           return (
-            <Pressable
+            <TabItem
               key={route.key}
-              accessibilityRole="button"
-              accessibilityState={isFocused ? { selected: true } : {}}
-              onPress={onPress}
-              style={({ pressed }) => [
-                styles.tab,
-                isFocused && styles.tabActive,
-                pressed && styles.tabPressed,
-              ]}
-            >
-              <TabIcon
-                spec={isFocused ? spec.active : spec.inactive}
-                color={isFocused ? Colors.primary : Colors.tertiaryFixedDim + 'AA'}
-                size={22}
-              />
-              <Text
-                style={[
-                  styles.label,
-                  { color: isFocused ? Colors.primary : Colors.tertiaryFixedDim + 'AA' },
-                ]}
-              >
-                {spec.label}
-              </Text>
-            </Pressable>
+              spec={spec}
+              isFocused={isFocused}
+              onPress={() => {
+                const event = navigation.emit({
+                  type: 'tabPress',
+                  target: route.key,
+                  canPreventDefault: true,
+                });
+                if (!isFocused && !event.defaultPrevented) {
+                  navigation.navigate(route.name as never);
+                }
+              }}
+            />
           );
         })}
       </BlurView>
@@ -112,6 +140,14 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         sceneStyle: { backgroundColor: Colors.surface },
+        // Without this the navigator's default is 'none', which is why switching
+        // tabs was instantaneous. 'shift' slides the outgoing/incoming screens a
+        // little in the direction of travel, so the move reads as a direction.
+        animation: 'shift',
+        transitionSpec: {
+          animation: 'timing',
+          config: { duration: 220, easing: Easing.out(Easing.cubic) },
+        },
       }}
     >
       <Tabs.Screen name="index" />
@@ -148,11 +184,19 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
     paddingVertical: 6,
     borderRadius: 18,
   },
-  tabActive: {
+  tabInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+  },
+  // Sits behind the icon so its opacity can animate on the native driver —
+  // animating backgroundColor directly would force a JS-driven animation.
+  pill: {
+    ...StyleSheet.absoluteFill,
+    borderRadius: 18,
     backgroundColor: 'rgba(75, 142, 255, 0.14)',
   },
   tabPressed: {

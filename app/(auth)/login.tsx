@@ -8,8 +8,6 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Svg, Path, Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as WebBrowser from 'expo-web-browser';
@@ -23,7 +21,6 @@ WebBrowser.maybeCompleteAuthSession();
 const redirectTo = 'crezo://auth/callback';
 
 export default function LoginScreen() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,28 +74,6 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.actions}>
-          <Pressable
-            onPress={() => router.push('/(auth)/otp')}
-            disabled={loading}
-            style={({ pressed }) => [styles.primaryWrap, pressed && styles.pressed]}
-          >
-            <LinearGradient
-              colors={['#ADC6FF', '#4B8EFF']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.primaryButton}
-            >
-              <Ionicons name="phone-portrait-outline" size={18} color={Colors.onPrimaryContainer} />
-              <Text style={styles.primaryText}>Continue with Phone</Text>
-            </LinearGradient>
-          </Pressable>
-
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
           <Pressable
             onPress={signInWithGoogle}
             disabled={loading}
@@ -224,63 +199,25 @@ const styles = StyleSheet.create({
   actions: {
     gap: 16,
   },
-  primaryWrap: {
-    borderRadius: 14,
-    overflow: 'hidden',
-    shadowColor: '#4B8EFF',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 8,
-  },
-  primaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 56,
-    gap: 10,
-  },
-  primaryText: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 16,
-    color: Colors.onPrimaryContainer,
-    letterSpacing: 0.1,
-  },
   glassButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.surfaceContainerHigh,
-    height: 56,
+    height: 58,
     borderRadius: 14,
     gap: 12,
     borderWidth: 1,
     borderColor: 'rgba(193, 198, 215, 0.08)',
   },
   glassText: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 15,
+    fontFamily: 'Manrope_700Bold',
+    fontSize: 16,
     color: Colors.onSurface,
   },
   pressed: {
     opacity: 0.85,
     transform: [{ scale: 0.99 }],
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(193, 198, 215, 0.10)',
-  },
-  dividerText: {
-    fontFamily: 'Manrope_500Medium',
-    fontSize: 12,
-    color: Colors.onSurfaceVariant,
-    letterSpacing: 0.4,
   },
   error: {
     fontFamily: 'Manrope_500Medium',
