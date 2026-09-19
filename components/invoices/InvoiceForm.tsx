@@ -1,7 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'expo-router';
 import {
-  View, Text, TextInput, StyleSheet, ScrollView, Pressable,
-  ActivityIndicator, KeyboardAvoidingView, Platform, Modal, Switch,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -66,6 +77,21 @@ export function InvoiceForm({
     const inferred = selectedBrand.state_code ?? stateCodeFromGstin(selectedBrand.gstin);
     if (inferred) setPlaceOfSupply(inferred);
   }, [selectedBrand, placeOfSupply]);
+
+  const router = useRouter();
+
+  function explainGst() {
+    Alert.alert(
+      'Do you need GST?',
+      'Registration is generally required once your turnover crosses ₹20 lakh ' +
+        '(₹10 lakh in some states). Below that, most creators are not registered ' +
+        'and invoice without GST — which is perfectly valid.\n\n' +
+        'If you are registered, add your GSTIN under Payment & GST and this ' +
+        'switch becomes available.\n\n' +
+        'Thresholds and rates change. Confirm with your CA before relying on this.',
+      [{ text: 'Got it' }],
+    );
+  }
 
   const totals = useMemo(
     () => calculateTax(items, { applyGst, supplierStateCode: supplierState, placeOfSupplyCode: placeOfSupply }),
@@ -199,12 +225,24 @@ export function InvoiceForm({
           <Field label="Tax">
             <View style={styles.gstRow}>
               <View style={styles.gstBody}>
-                <Text style={styles.gstLabel}>Charge GST at {GST_RATE}%</Text>
-                <Text style={styles.gstHint}>
-                  {creator?.gst_number
-                    ? `Your GSTIN ${creator.gst_number}`
-                    : 'Add your GSTIN in Payment & GST to enable this'}
-                </Text>
+                <View style={styles.gstLabelRow}>
+                  <Text style={styles.gstLabel}>Charge GST at {GST_RATE}%</Text>
+                  <Pressable onPress={explainGst} hitSlop={10}>
+                    <Ionicons name="information-circle-outline" size={16} color={Colors.onSurfaceVariant} />
+                  </Pressable>
+                </View>
+                {creator?.gst_number ? (
+                  <Text style={styles.gstHint}>Your GSTIN {creator.gst_number}</Text>
+                ) : (
+                  // Not having a GSTIN is a legitimate position, not a missing
+                  // step — most creators under the threshold never register.
+                  <Pressable onPress={() => router.push('/settings/payment')}>
+                    <Text style={styles.gstHint}>
+                      Not registered for GST — invoice without it, or{' '}
+                      <Text style={styles.gstLink}>add your GSTIN</Text>
+                    </Text>
+                  </Pressable>
+                )}
               </View>
               <Switch
                 value={applyGst}
@@ -427,9 +465,11 @@ const styles = StyleSheet.create({
   addItemText: { fontFamily: 'Manrope_600SemiBold', fontSize: 13, color: Colors.primary },
 
   gstRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: Colors.surfaceContainerLow, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13 },
-  gstBody: { flex: 1, gap: 2 },
+  gstBody: { flex: 1, gap: 3 },
+  gstLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   gstLabel: { fontFamily: 'Manrope_600SemiBold', fontSize: 14, color: Colors.onSurface },
-  gstHint: { fontFamily: 'Manrope_400Regular', fontSize: 11, color: Colors.onSurfaceVariant },
+  gstHint: { fontFamily: 'Manrope_400Regular', fontSize: 11, lineHeight: 16, color: Colors.onSurfaceVariant },
+  gstLink: { fontFamily: 'Manrope_700Bold', color: Colors.primary },
   sacRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, backgroundColor: Colors.surfaceContainerLow, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10 },
   sacInput: { minWidth: 110, textAlign: 'right', fontFamily: 'Manrope_600SemiBold', fontSize: 14, color: Colors.onSurface, paddingVertical: 4 },
 
