@@ -187,7 +187,9 @@ export interface BrandOption { id: string; name: string; }
 export async function listBrandOptions(): Promise<BrandOption[]> {
   const creatorId = await getCreatorId();
   if (!creatorId) return [];
-  const deals = await listDeals(creatorId);
+  // Brand credentials, not a feed — one generous page is plenty, and a
+  // creator with more than 200 completed deals can still pick from the top.
+  const { items: deals } = await listDeals(creatorId, { size: 200 });
   const seen = new Map<string, string>();
   for (const d of deals) {
     if (!d.brand) continue;

@@ -51,7 +51,8 @@ export async function listFolders(creatorId: string): Promise<VaultFolder[]> {
     .from('vault_folders')
     .select(FOLDER_SELECT)
     .eq('creator_id', creatorId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(200);
 
   if (error) throw new Error(error.message);
 
@@ -110,7 +111,11 @@ export async function listFolderAssets(folderId: string): Promise<AssetMeta[]> {
     .from('assets_metadata')
     .select('id, creator_id, folder_id, deal_id, device_asset_id, deliverable_status, tags')
     .eq('folder_id', folderId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    // A folder can hold thousands of assets. Capped for now rather than fully
+    // paged, because the grid resolves every id against the device library and
+    // that, not the query, is the real cost.
+    .limit(500);
 
   if (error) throw new Error(error.message);
   return (data ?? []) as AssetMeta[];

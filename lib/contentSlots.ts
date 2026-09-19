@@ -106,6 +106,9 @@ export async function listSlotsInRange(
     .eq('creator_id', creatorId)
     .gte('scheduled_date', fromDate)
     .lte('scheduled_date', toDate)
+    // The date window already bounds this; the cap is only so the list can
+    // never be silently truncated at Supabase's 1000-row default.
+    .limit(500)
     .order('scheduled_date', { ascending: true })
     .order('scheduled_time', { ascending: true, nullsFirst: true });
 
@@ -187,7 +190,8 @@ export async function listDealOptions(
     .select('id, title, brand:brands(name)')
     .eq('creator_id', creatorId)
     .in('status', OPEN_DEAL_STATUSES)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(200);
 
   if (error) throw new Error(error.message);
 

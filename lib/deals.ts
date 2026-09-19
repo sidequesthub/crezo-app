@@ -1,4 +1,9 @@
 import { supabase } from './supabase';
+import {
+  afterCursor, pageWindow, toPage, PAGE_SIZE,
+  type Cursor, type Page,
+} from './pagination';
+import { periodRange, ALL_TIME, type Period } from './financialYear';
 import { CLOSED_DEAL_STATUSES, OPEN_DEAL_STATUSES, type DealStatus } from '@/constants/deals';
 
 /** Direct-Supabase access, isolated by RLS — see the note in lib/contentSlots.ts. */
@@ -34,6 +39,8 @@ export interface Deal {
   notes: string | null;
   brand: { id: string; name: string } | null;
   deliverables: Deliverable[];
+  /** Needed for the pagination cursor as well as display. */
+  created_at: string;
 }
 
 export interface DealInput {
@@ -49,20 +56,77 @@ export interface DealInput {
 
 const SELECT = `
   id, creator_id, brand_id, title, value_inr, status, start_date, end_date,
-  usage_rights, notes,
+  usage_rights, notes, created_at,
   brand:brands(id, name),
   deliverables(id, deal_id, title, platform, due_date, status)
 `;
 
-export async function listDeals(creatorId: string): Promise<Deal[]> {
-  const { data, error } = await supabase
+/**
+ * Totals for a period, computed over every matching deal rather than the
+ * pages loaded so far — otherwise "Earned" would change as you scroll, which
+ * is worse than not showing it.
+ *
+ * Two columns and no joins, so even a few thousand rows is a small response.
+ */
+export async function dealTotals(
+  creatorId: string,
+  period: Period = ALL_TIME,
+): Promise<{ earned: number; pending: number; count: number }> {
+  let query = supabase
+    .from('deals')
+    .select('value_inr, status')
+    .eq('creator_id', creatorId)
+    .limit(5000);
+
+  const range = periodRange(period);
+  if (range) {
+    query = query.gte('created_at', range[0]).lte('created_at', `${range[1]}T23:59:59.999Z`);
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+
+  let earned = 0;
+  let pending = 0;
+  for (const row of data ?? []) {
+    const value = row.value_inr ?? 0;
+    if (CLOSED_DEAL_STATUSES.includes(row.status)) earned += value;
+    else pending += value;
+  }
+  return { earned, pending, count: (data ?? []).length };
+}
+
+/**
+ * One page of deals, newest first. Pass the previous page's `next` to continue.
+ *
+ * `period` filters on the server rather than after the fact, so a financial
+ * year's worth of deals is all that crosses the wire — and the totals derived
+ * from it are the totals for that year, not for all time.
+ */
+export async function listDeals(
+  creatorId: string,
+  options: { cursor?: Cursor | null; period?: Period; size?: number } = {},
+): Promise<Page<Deal>> {
+  const { cursor, period = ALL_TIME, size = PAGE_SIZE } = options;
+
+  let query = supabase
     .from('deals')
     .select(SELECT)
-    .eq('creator_id', creatorId)
-    .order('created_at', { ascending: false });
+    .eq('creator_id', creatorId);
+
+  const range = periodRange(period);
+  if (range) {
+    query = query.gte('created_at', range[0]).lte('created_at', `${range[1]}T23:59:59.999Z`);
+  }
+
+  const { data, error } = await afterCursor(query, cursor)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(pageWindow(size));
 
   if (error) throw new Error(error.message);
-  return normalise(data);
+
+  return toPage(normalise(data), size);
 }
 
 export async function getDeal(id: string): Promise<Deal | null> {
@@ -99,7 +163,8 @@ export async function listBrands(creatorId: string): Promise<Brand[]> {
     .from('brands')
     .select('id, name, contact_person, email, phone, whatsapp')
     .eq('creator_id', creatorId)
-    .order('name', { ascending: true });
+    .order('name', { ascending: true })
+    .limit(500);
 
   if (error) throw new Error(error.message);
   return (data ?? []) as Brand[];
@@ -180,6 +245,7 @@ export async function listDeliverableOptions(creatorId: string): Promise<
     .select('id, title, platform, due_date, deal:deals!inner(id, title, status, creator_id, brand:brands(name))')
     .eq('deal.creator_id', creatorId)
     .in('deal.status', OPEN_DEAL_STATUSES)
+    .limit(200)
     .order('due_date', { ascending: true, nullsFirst: false });
 
   if (error) throw new Error(error.message);

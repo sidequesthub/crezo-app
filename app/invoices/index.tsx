@@ -18,6 +18,9 @@ export default function InvoicesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const creatorId = useRef<string | null>(null);
 
   const load = useCallback(async () => {
@@ -25,7 +28,10 @@ export default function InvoicesScreen() {
       setError(null);
       if (!creatorId.current) creatorId.current = await getCreatorId();
       if (!creatorId.current) return setInvoices([]);
-      setInvoices(await listInvoices(creatorId.current));
+      const { items, hasMore } = await listInvoices(creatorId.current, { page: 0 });
+      setInvoices(items);
+      setPage(0);
+      setHasMore(hasMore);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load invoices');
     } finally {
@@ -33,6 +39,22 @@ export default function InvoicesScreen() {
       setRefreshing(false);
     }
   }, []);
+
+  const loadMore = useCallback(async () => {
+    if (!hasMore || loadingMore || !creatorId.current) return;
+    setLoadingMore(true);
+    try {
+      const next = page + 1;
+      const res = await listInvoices(creatorId.current, { page: next });
+      setInvoices((prev) => [...prev, ...res.items]);
+      setPage(next);
+      setHasMore(res.hasMore);
+    } catch {
+      // Pull to refresh retries; a failed page does not deserve a banner.
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [hasMore, loadingMore, page]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
@@ -64,6 +86,12 @@ export default function InvoicesScreen() {
         <ScrollView
           contentContainerStyle={{ paddingBottom: bottomInset + 80 }}
           showsVerticalScrollIndicator={false}
+          scrollEventThrottle={64}
+          onScroll={({ nativeEvent: e }) => {
+            const remaining =
+              e.contentSize.height - e.layoutMeasurement.height - e.contentOffset.y;
+            if (remaining < 600) loadMore();
+          }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={Colors.primary} />
           }
@@ -100,6 +128,9 @@ export default function InvoicesScreen() {
                 )}
               </View>
             </>
+          )}
+          {loadingMore && (
+            <ActivityIndicator color={Colors.primary} style={{ marginVertical: 18 }} />
           )}
         </ScrollView>
       </SafeAreaView>

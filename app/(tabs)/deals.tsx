@@ -22,8 +22,12 @@ import {
   CLOSED_DEAL_STATUSES,
   type DealStatus,
 } from '@/constants/deals';
-import { listDeals, progressOf, type Deal } from '@/lib/deals';
+import { listDeals, dealTotals, progressOf, type Deal } from '@/lib/deals';
 import { getCreatorId } from '@/lib/contentSlots';
+import { PAGE_SIZE, type Cursor } from '@/lib/pagination';
+import {
+  financialYearOf, recentFinancialYears, periodLabel, ALL_TIME, type Period,
+} from '@/lib/financialYear';
 import { formatINR, formatINRFull } from '@/lib/format';
 import { fromISODate } from '@/lib/dates';
 
@@ -34,6 +38,13 @@ export default function DealsScreen() {
   const router = useRouter();
 
   const [deals, setDeals] = useState<Deal[]>([]);
+  const [cursor, setCursor] = useState<Cursor | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [period, setPeriod] = useState<Period>(() => ({
+    kind: 'fy', year: financialYearOf(),
+  }));
+  const [periodOpen, setPeriodOpen] = useState(false);
+  const [totals, setTotals] = useState({ earned: 0, pending: 0, count: 0 });
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -50,14 +61,35 @@ export default function DealsScreen() {
         setDeals([]);
         return;
       }
-      setDeals(await listDeals(creatorId.current));
+      const [page, sums] = await Promise.all([
+        listDeals(creatorId.current, { period }),
+        dealTotals(creatorId.current, period),
+      ]);
+      setDeals(page.items);
+      setCursor(page.next);
+      setTotals(sums);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load your deals');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [period]);
+
+  /** Appends the next page. Guarded so a fast scroll cannot fire it twice. */
+  const loadMore = useCallback(async () => {
+    if (!cursor || loadingMore || !creatorId.current) return;
+    setLoadingMore(true);
+    try {
+      const page = await listDeals(creatorId.current, { cursor, period });
+      setDeals((prev) => [...prev, ...page.items]);
+      setCursor(page.next);
+    } catch {
+      // A failed page is not worth an error banner; pulling to refresh retries.
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [cursor, loadingMore, period]);
 
   useFocusEffect(
     useCallback(() => {
@@ -65,17 +97,8 @@ export default function DealsScreen() {
     }, [load]),
   );
 
-  /** Earned = money already in. Pending = value still owed across open deals. */
-  const totals = useMemo(() => {
-    let earned = 0;
-    let pending = 0;
-    for (const d of deals) {
-      if (CLOSED_DEAL_STATUSES.includes(d.status)) earned += d.value_inr;
-      else pending += d.value_inr;
-    }
-    return { earned, pending };
-  }, [deals]);
-
+  // Counts describe the pages loaded so far, which is what the dropdown is
+  // filtering over. The headline totals above come from the server.
   const counts = useMemo(() => {
     const map = new Map<DealStatus, number>();
     for (const d of deals) map.set(d.status, (map.get(d.status) ?? 0) + 1);
@@ -103,6 +126,12 @@ export default function DealsScreen() {
           contentContainerStyle={{ paddingBottom: bottomInset }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          scrollEventThrottle={64}
+          onScroll={({ nativeEvent: e }) => {
+            const remaining =
+              e.contentSize.height - e.layoutMeasurement.height - e.contentOffset.y;
+            if (remaining < 600) loadMore();
+          }}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -117,6 +146,11 @@ export default function DealsScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>My Deals</Text>
             <Text style={styles.subtitle}>Manage your active brand pipeline</Text>
+            <Pressable onPress={() => setPeriodOpen(true)} style={styles.period}>
+              <Ionicons name="calendar-outline" size={14} color={Colors.primary} />
+              <Text style={styles.periodText}>{periodLabel(period)}</Text>
+              <Ionicons name="chevron-down" size={14} color={Colors.primary} />
+            </Pressable>
           </View>
 
           <View style={styles.searchRow}>
@@ -175,19 +209,30 @@ export default function DealsScreen() {
                   onChange={setFilter}
                 />
                 <Text style={styles.resultCount}>
-                  {visible.length} {visible.length === 1 ? 'deal' : 'deals'}
+                  {visible.length} of {totals.count}
                 </Text>
               </View>
 
               <View style={styles.list}>
                 {visible.length > 0 ? (
-                  visible.map((d) => (
-                    <DealCard
-                      key={d.id}
-                      deal={d}
-                      onPress={() => router.push(`/deal/${d.id}`)}
-                    />
-                  ))
+                  <>
+                    {visible.map((d) => (
+                      <DealCard
+                        key={d.id}
+                        deal={d}
+                        onPress={() => router.push(`/deal/${d.id}`)}
+                      />
+                    ))}
+                    {loadingMore && (
+                      <ActivityIndicator
+                        color={Colors.primary}
+                        style={styles.moreSpinner}
+                      />
+                    )}
+                    {!cursor && totals.count > PAGE_SIZE && (
+                      <Text style={styles.endOfList}>That's everything for {periodLabel(period)}.</Text>
+                    )}
+                  </>
                 ) : deals.length === 0 ? (
                   <Message
                     icon="briefcase-outline"
@@ -213,6 +258,49 @@ export default function DealsScreen() {
             </>
           )}
         </ScrollView>
+
+        <Modal
+          visible={periodOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setPeriodOpen(false)}
+        >
+          <Pressable style={styles.backdrop} onPress={() => setPeriodOpen(false)}>
+            <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+              <View style={styles.sheetHandle} />
+              <Text style={styles.sheetTitle}>Period</Text>
+              {[
+                ...recentFinancialYears(4).map((year) => ({
+                  key: year.code,
+                  label: year.label,
+                  value: { kind: 'fy', year } as Period,
+                })),
+                { key: 'all', label: 'All time', value: ALL_TIME },
+              ].map((o) => {
+                const active = periodLabel(o.value) === periodLabel(period);
+                return (
+                  <Pressable
+                    key={o.key}
+                    onPress={() => {
+                      setPeriod(o.value);
+                      setPeriodOpen(false);
+                    }}
+                    style={({ pressed }) => [
+                      styles.option,
+                      active && styles.optionActive,
+                      pressed && !active && styles.optionPressed,
+                    ]}
+                  >
+                    <Text style={[styles.optionText, active && styles.optionTextActive]}>
+                      {o.label}
+                    </Text>
+                    {active && <Ionicons name="checkmark" size={18} color={Colors.primary} />}
+                  </Pressable>
+                );
+              })}
+            </Pressable>
+          </Pressable>
+        </Modal>
       </SafeAreaView>
 
       <FloatingActionButton
@@ -426,6 +514,17 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   loadingBlock: { paddingVertical: 64, alignItems: 'center' },
 
+  moreSpinner: { marginVertical: 18 },
+  endOfList: {
+    fontFamily: 'Manrope_400Regular', fontSize: 12, color: Colors.onSurfaceVariant,
+    textAlign: 'center', marginTop: 18,
+  },
+  period: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
+    marginTop: 12, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999,
+    backgroundColor: Colors.surfaceContainerHigh,
+  },
+  periodText: { fontFamily: 'Manrope_700Bold', fontSize: 12, color: Colors.primary },
   header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 14, gap: 4 },
   title: {
     fontFamily: 'PlusJakartaSans_800ExtraBold',

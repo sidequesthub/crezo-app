@@ -1,4 +1,6 @@
 import { supabase } from './supabase';
+import { PAGE_SIZE } from './pagination';
+import { periodRange, ALL_TIME, type Period } from './financialYear';
 import { getCreatorId } from './contentSlots';
 import { calculateTax, type LineItem } from '@/constants/gst';
 
@@ -85,16 +87,42 @@ const SELECT = `
   deal:deals(id, title)
 `;
 
-export async function listInvoices(creatorId: string): Promise<Invoice[]> {
-  const { data, error } = await supabase
+/**
+ * One page of invoices, newest first.
+ *
+ * Offset paging rather than a keyset cursor, deliberately: these are ordered
+ * by invoice_date, which is neither unique nor monotonic (a draft can be
+ * back-dated), so there is no stable key to anchor a cursor to. Offsets can
+ * drift if a row is inserted mid-scroll, which for invoices is rare and
+ * costs at most one repeated row.
+ */
+export async function listInvoices(
+  creatorId: string,
+  options: { page?: number; period?: Period; size?: number } = {},
+): Promise<{ items: Invoice[]; hasMore: boolean }> {
+  const { page = 0, period = ALL_TIME, size = PAGE_SIZE } = options;
+  const from = page * size;
+
+  let query = supabase
     .from('invoices')
     .select(SELECT)
-    .eq('creator_id', creatorId)
+    .eq('creator_id', creatorId);
+
+  const range = periodRange(period);
+  // Filtered on invoice_date so a financial year matches the invoice series,
+  // which is numbered by the same year.
+  if (range) query = query.gte('invoice_date', range[0]).lte('invoice_date', range[1]);
+
+  const { data, error } = await query
     .order('invoice_date', { ascending: false })
-    .order('invoice_number', { ascending: false });
+    .order('invoice_number', { ascending: false })
+    .range(from, from + size);            // one extra row proves there is more
 
   if (error) throw new Error(error.message);
-  return normalise(data);
+
+  const rows = normalise(data);
+  const hasMore = rows.length > size;
+  return { items: hasMore ? rows.slice(0, size) : rows, hasMore };
 }
 
 export async function getInvoice(id: string): Promise<Invoice | null> {
@@ -272,7 +300,8 @@ export async function listBrandOptions(creatorId: string) {
     .from('brands')
     .select('id, name, gstin, address, state_code, email')
     .eq('creator_id', creatorId)
-    .order('name');
+    .order('name')
+    .limit(500);
 
   if (error) throw new Error(error.message);
   return data ?? [];

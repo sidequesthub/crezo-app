@@ -78,6 +78,24 @@ migrating rows is a product decision. Propose it; don't do it unasked.
 
 ---
 
+## Every list query is bounded
+
+Supabase caps a response at **1000 rows by default and does not error** — an
+unbounded `select()` just stops returning the rest, so the failure looks like
+missing data rather than a bug. Nothing may ship an unbounded list read.
+
+- Growing, user-facing lists page properly: `lib/pagination.ts` (keyset) or
+  `.range()` where the sort key is not unique and monotonic, as in invoices.
+- Pickers and other bounded lists still carry an explicit `.limit()`.
+- **Totals never come from the loaded pages.** A figure computed over "what
+  has been fetched so far" changes as the user scrolls. Query the aggregate
+  separately — see `dealTotals()`.
+
+Periods use the Indian financial year (April–March) via `lib/financialYear.ts`,
+matching the invoice series (`2026-27/0007`).
+
+---
+
 ## Architecture: pick one data path
 
 There are currently two, and this is unresolved:
