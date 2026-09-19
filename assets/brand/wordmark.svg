@@ -4,36 +4,27 @@
       <stop offset="0%" stop-color="#14161B" />
       <stop offset="100%" stop-color="#0B0C0E" />
     </linearGradient>
-    <linearGradient id="blueGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4B8EFF" />
-      <stop offset="100%" stop-color="#0062FF" />
-    </linearGradient>
     <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
       <feGaussianBlur stdDeviation="8" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
   </defs>
 
-  <!-- App Icon Squircle Canvas -->
+  <!-- Identical Obsidian Squircle Canvas -->
   <rect width="512" height="512" rx="116" fill="url(#crezoBg)" />
   <rect x="2" y="2" width="508" height="508" rx="114" fill="none" stroke="#252932" stroke-width="2.5" />
 
-  <!-- Subtle ambient glow in center -->
-  <circle cx="256" cy="256" r="140" fill="#0062FF" opacity="0.08" filter="url(#glow)" />
+  <!-- Subtle ambient blue glow in center identical to original -->
+  <circle cx="256" cy="256" r="160" fill="#0062FF" opacity="0.08" filter="url(#glow)" />
 
-  <!-- Full Brand Wordmark: "Crezo" -->
+  <!-- Brand Wordmark: Even bigger font size (152px), minimal horizontal padding, strictly preserving the exact font, weight 800, white color, and tracking -->
   <g id="crezo-wordmark">
-    <!-- Clean, refined typography: Plus Jakarta Sans / geometric neo-grotesque style -->
-    <!-- Text rendering with precise tracking, crisp pure white, non-italic, perfectly centered -->
-    <text x="256" y="278" 
+    <text x="256" y="304" 
           text-anchor="middle" 
           font-family="system-ui, -apple-system, 'Plus Jakarta Sans', sans-serif" 
-          font-size="94" 
+          font-size="152" 
           font-weight="800" 
           letter-spacing="-2.5" 
           fill="#FFFFFF">Crezo</text>
-
-    <!-- Refined electric blue signature dot / spark accentuating the brand mark -->
-    <circle cx="396" cy="274" r="7" fill="url(#blueGlow)" />
   </g>
 </svg>

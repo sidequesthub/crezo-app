@@ -32,7 +32,10 @@ const esc = (s: string | null | undefined) =>
 
 export function invoiceHtml(invoice: Invoice, creator: CreatorProfile): string {
   const hasGst = invoice.gst_amount > 0;
-  const number = invoice.invoice_number ? `INV-${String(invoice.invoice_number).padStart(4, '0')}` : 'DRAFT';
+  const issued = invoice.invoice_number != null;
+  const number = issued
+    ? `INV-${String(invoice.invoice_number).padStart(4, '0')}`
+    : 'Not yet issued';
   const bank = [creator.bank_name, creator.bank_account_number, creator.bank_ifsc].filter(Boolean);
 
   const rows = invoice.line_items
@@ -93,13 +96,19 @@ export function invoiceHtml(invoice: Invoice, creator: CreatorProfile): string {
   .pay > div { flex: 1; }
   .pay h3 { margin: 0 0 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; font-weight: 700; }
   .foot { margin-top: 36px; padding-top: 16px; border-top: 1px solid #eceef1; color: #9ca3af; font-size: 10px; display: flex; justify-content: space-between; }
+  .draft {
+    position: fixed; top: 42%; left: 0; right: 0; text-align: center;
+    font-size: 96px; font-weight: 800; color: rgba(17,24,39,.07);
+    letter-spacing: 12px; transform: rotate(-24deg); pointer-events: none;
+  }
   .sign { margin-top: 40px; text-align: right; }
   .sign .line { display: inline-block; border-top: 1px solid #9ca3af; padding-top: 6px; min-width: 180px; font-size: 11px; }
 </style></head>
 <body>
+  ${issued ? '' : '<div class="draft">PROFORMA</div>'}
   <div class="head">
     <div>
-      <h1 class="title">${hasGst ? 'Tax Invoice' : 'Invoice'}</h1>
+      <h1 class="title">${issued ? (hasGst ? 'Tax Invoice' : 'Invoice') : 'Proforma Invoice'}</h1>
       <div class="sub">${esc(creator.name)}</div>
     </div>
     <div class="meta">
@@ -180,7 +189,13 @@ export function invoiceHtml(invoice: Invoice, creator: CreatorProfile): string {
   <div class="sign"><div class="line">Authorised signatory</div></div>
 
   <div class="foot">
-    <span>${hasGst ? 'This is a computer-generated tax invoice.' : 'This is a computer-generated invoice.'}</span>
+    <span>${
+      issued
+        ? hasGst
+          ? 'This is a computer-generated tax invoice.'
+          : 'This is a computer-generated invoice.'
+        : 'Proforma only — not a tax invoice. A tax invoice with a number follows on issue.'
+    }</span>
     <span>Made with Crezo</span>
   </div>
 </body></html>`;
