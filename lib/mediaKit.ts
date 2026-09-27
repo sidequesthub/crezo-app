@@ -14,7 +14,8 @@ import { listDeals } from '@/lib/deals';
 
 export interface Platform {
   id: string;
-  network: string;      // 'Instagram', 'YouTube', …
+  /** A PLATFORMS id — 'instagram', 'youtube', … Free text before; a picker now. */
+  network: string;
   handle: string;
   followers: string;    // free text: creators think in "128K", not 128000
   avgViews: string;
@@ -26,6 +27,8 @@ export interface MediaKitData {
   bio: string;
   niche: string;
   contactEmail: string;
+  /** Public URL in the media-kit bucket. Empty means show the initial instead. */
+  photoUrl: string;
   platforms: Platform[];
   /** Brand ids the creator chose to show. Some deals are under NDA. */
   brandIds: string[];
@@ -55,7 +58,7 @@ export interface MediaKit {
 }
 
 export const EMPTY: MediaKitData = {
-  displayName: '', tagline: '', bio: '', niche: '', contactEmail: '',
+  displayName: '', tagline: '', bio: '', niche: '', contactEmail: '', photoUrl: '',
   platforms: [], brandIds: [], rates: [],
   show: { platforms: true, brands: true, rates: false, contact: true },
 };
@@ -117,7 +120,7 @@ export async function createMediaKit(): Promise<MediaKit> {
   if (!creatorId) throw new Error('No creator profile for this account.');
 
   const { data: profile } = await supabase
-    .from('creators').select('name, bio, niche, email').eq('id', creatorId).single();
+    .from('creators').select('name, bio, niche, email, avatar_url').eq('id', creatorId).single();
 
   const draft: MediaKitData = {
     ...EMPTY,
@@ -125,6 +128,8 @@ export async function createMediaKit(): Promise<MediaKit> {
     bio: profile?.bio ?? '',
     niche: profile?.niche ?? '',
     contactEmail: profile?.email ?? '',
+    // Google sign-in already gave us a photo; no reason to make them pick one.
+    photoUrl: profile?.avatar_url ?? '',
   };
 
   // Slugs are globally unique; retry with a suffix on collision.
@@ -196,4 +201,39 @@ export async function listBrandOptions(): Promise<BrandOption[]> {
     if (d.status === 'delivered' || d.status === 'paid') seen.set(d.brand.id, d.brand.name);
   }
   return [...seen].map(([id, name]) => ({ id, name }));
+}
+
+// ------------------------------------------------------------------- photo
+
+const PHOTO_BUCKET = 'media-kit';
+
+/**
+ * Uploads a picked image and returns its public URL.
+ *
+ * The bucket is public-read because the media kit page is public; writes are
+ * restricted by RLS to the creator's own folder, so the path must start with
+ * their creator id.
+ */
+export async function uploadPhoto(localUri: string): Promise<string> {
+  const creatorId = await getCreatorId();
+  if (!creatorId) throw new Error('No creator profile for this account.');
+
+  const response = await fetch(localUri);
+  const blob = await response.blob();
+  if (blob.size > 5_000_000) {
+    throw new Error('That image is over 5 MB. Pick a smaller one.');
+  }
+
+  const ext = blob.type === 'image/png' ? 'png' : blob.type === 'image/webp' ? 'webp' : 'jpg';
+  // Overwrite a single path rather than accumulating orphans on every change.
+  const path = `${creatorId}/photo.${ext}`;
+
+  const { error } = await supabase.storage
+    .from(PHOTO_BUCKET)
+    .upload(path, blob, { upsert: true, contentType: blob.type || 'image/jpeg' });
+  if (error) throw new Error(error.message);
+
+  const { data } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path);
+  // Cache-bust, or the CDN keeps serving the previous photo at the same path.
+  return `${data.publicUrl}?v=${Date.now()}`;
 }
