@@ -24,7 +24,7 @@ billing, team seats. §10 shows where each would fit.
 
 | Concept | What it is | Example |
 |---|---|---|
-| **Feature** | A named capability, defined once, owned by code | `invoices.gst`, `deals.active_max` |
+| **Feature** | A named capability, defined once, owned by code | `invoices.branding`, `deals.active_max` |
 | **Feature kind** | `bool` (on/off) or `limit` (integer, `null` = unlimited) | |
 | **Plan** | A tier: a bundle of feature values | Free, Creator, Pro |
 | **Plan value** | What one plan sets for one feature | Creator → `invoices.issued_per_month = 15` |
@@ -51,6 +51,10 @@ Missing data therefore never grants more than intended.
    exporting what they already entered is always free, on every tier.
 5. **One reason per gate.** Each gated feature must be explainable in a
    single line on the paywall.
+6. **Never gate legal compliance.** Every creator must invoice to get paid.
+   A GST-registered creator is legally required to charge GST, and gating it
+   would make their invoices non-compliant. Invoicing, with or without GST,
+   is core. What's paid is volume and polish.
 
 ### Proposed catalog
 
@@ -59,8 +63,7 @@ The values below are a proposal. Pricing follows the spec (₹299–499/month).
 | Feature key | Kind | Free | Creator ₹299 | Pro ₹499 | Enforced in |
 |---|---|---|---|---|---|
 | `deals.active_max` | limit | 5 | 25 | ∞ | DB trigger on `deals` insert |
-| `invoices.issued_per_month` | limit | 2 | 15 | ∞ | `issue_invoice()` RPC |
-| `invoices.gst` (CGST/SGST/IGST breakup) | bool | ✗ | ✓ | ✓ | `issue_invoice()` RPC |
+| `invoices.issued_per_month` | limit | 5 | 25 | ∞ | `issue_invoice()` RPC |
 | `invoices.branding` (logo, signature, no "Made with Crezo") | bool | ✗ | ✓ | ✓ | client (PDF is rendered on device) |
 | `invoices.bill_on_behalf` (agency billing) | bool | ✗ | ✗ | ✓ | DB trigger on `invoices` |
 | `mediakit.remove_branding` | bool | ✗ | ✓ | ✓ | `get_media_kit()` (server-rendered page) |
@@ -69,7 +72,8 @@ The values below are a proposal. Pricing follows the spec (₹299–499/month).
 | `mediakit.analytics` *(future)* | bool | ✗ | ✗ | ✓ | query RLS |
 
 **Always free:** calendar and content slots; the deal pipeline, up to the
-limit; deliverables and approval states; deadline and payment reminders;
+limit; deliverables and approval states;
+invoices with or without GST, up to the monthly limit; deadline and payment reminders;
 drafts and proforma invoices, which are unlimited because only *issuing*
 counts; publishing the media kit (a Free kit carries "Powered by Crezo", which
 is free distribution); profile; data export; account deletion.
@@ -204,7 +208,7 @@ thousands of rows.
 | Gate | Hook |
 |---|---|
 | `deals.active_max` | `before insert on deals` → `require_capacity`. Also `before update` when status moves from closed back to open. |
-| `invoices.issued_per_month`, `invoices.gst` | Inside `issue_invoice()`. Drafts are never blocked, only issuing is. |
+| `invoices.issued_per_month` | Inside `issue_invoice()`. Drafts are never blocked, only issuing is. |
 | `invoices.bill_on_behalf` | `before insert or update on invoices` when the invoice's `brand_id` ≠ the deal's brand. |
 | `vault.folders_max` | `before insert on vault_folders` |
 | `mediakit.remove_branding` | `get_media_kit()` returns `show_branding`; the landing page obeys it. |
@@ -224,7 +228,7 @@ Raised as `P0001`, which PostgREST passes through as `{ code, message, hint }`:
 
 | `message` | `hint` (JSON) | App reaction |
 |---|---|---|
-| `plan_required` | `{"feature":"invoices.gst"}` | open the paywall for that feature |
+| `plan_required` | `{"feature":"invoices.bill_on_behalf"}` | open the paywall for that feature |
 | `plan_limit` | `{"feature":"deals.active_max","limit":5,"used":5}` | open the paywall, saying "You've reached 5 active deals" |
 
 `lib/subscription.ts` exposes `planError(e)`, which turns a Supabase error
@@ -235,12 +239,12 @@ passes errors through it.
 
 ```ts
 // constants/features.ts — the typed mirror of the registry.
-export type BoolFeature  = 'invoices.gst' | 'invoices.branding' | 'invoices.bill_on_behalf'
+export type BoolFeature  = 'invoices.branding' | 'invoices.bill_on_behalf'
                          | 'mediakit.remove_branding' | 'reports.fy_export';
 export type LimitFeature = 'deals.active_max' | 'invoices.issued_per_month' | 'vault.folders_max';
 
 // lib/subscription.ts
-has(e, 'invoices.gst'): boolean
+has(e, 'invoices.branding'): boolean
 limit(e, 'deals.active_max'): number | null        // null = unlimited
 remaining(e, 'deals.active_max'): number | null     // from e.usage
 cheapestPlanFor(catalog, feature, need?): Plan      // "Available on Creator"
@@ -253,7 +257,7 @@ planError(err): PlanError | null
   server still enforces, so a stale cache can only show a lock too few, never
   grant access.
 - **`useEntitlement()`** returns `{ plan, has, limit, remaining, refresh }`.
-- **`<Gate feature="invoices.gst">`** renders its children, or a small lock
+- **`<Gate feature="invoices.branding">`** renders its children, or a small lock
   row that opens the paywall. The UX stays minimal:
   - no banners and no "upgrade" badges scattered around;
   - a limit counter ("4 of 5 active deals") appears only at 80% of the limit
@@ -346,9 +350,8 @@ This is a product call, listed in §13.
 ## 13. Decisions needed
 
 1. **Tiers and values in §3.** Two paid tiers or one to start? Are the free
-   limits (5 deals, 2 invoices/month, 3 folders) right?
-2. **GST behind a paywall?** It's the strongest "serious creator" signal, but
-   an unregistered small creator never needs it, so it could be the main
-   reason to upgrade.
+   limits (5 active deals, 5 invoices/month, 3 folders) right?
+2. ~~GST behind a paywall?~~ **Decided 2026-09-28: no.** GST is compliance,
+   and every creator invoices. See principle 6.
 3. **Launch-day treatment of existing users:** comp them or not.
 4. **Annual pricing:** offer it from day one (typically ~2 months free)?
