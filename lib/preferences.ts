@@ -3,9 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 /**
  * Notification preferences.
  *
- * Stored on the device rather than the database: they're per-device settings,
- * and there's no push infrastructure yet to consume them server-side. When
- * delivery is built these move to the creator record so they follow the account.
+ * Stored on the device: the reminders they control are scheduled locally on
+ * this phone, so the preference belongs with the phone too.
  */
 
 const KEY = 'crezo.notificationPrefs.v1';
@@ -13,15 +12,11 @@ const KEY = 'crezo.notificationPrefs.v1';
 export interface NotificationPrefs {
   deadlineReminders: boolean;
   paymentReminders: boolean;
-  dealUpdates: boolean;
-  weeklyDigest: boolean;
 }
 
 export const DEFAULT_PREFS: NotificationPrefs = {
   deadlineReminders: true,
   paymentReminders: true,
-  dealUpdates: false,
-  weeklyDigest: false,
 };
 
 export async function loadPrefs(): Promise<NotificationPrefs> {

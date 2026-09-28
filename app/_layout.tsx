@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, AppState } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import {
   useFonts,
   PlusJakartaSans_700Bold,
@@ -16,6 +17,7 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import { useAuth } from '@/hooks/useAuth';
 import { Colors } from '@/constants/Colors';
+import { syncReminders } from '@/lib/reminders';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -50,6 +52,32 @@ export default function RootLayout() {
       router.replace('/(tabs)');
     }
   }, [session, loading, segments]);
+
+  // Rebuild the reminder schedule on sign-in, on sign-out (which clears it —
+  // one account's reminders must not fire on the next), and whenever the app
+  // returns to the foreground: dates pass and data may have changed elsewhere.
+  useEffect(() => {
+    if (loading) return;
+    syncReminders();
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && session) syncReminders();
+    });
+    return () => sub.remove();
+  }, [session, loading]);
+
+  // Tapping a reminder opens the deal or invoice it's about. This hook also
+  // covers a tap that cold-launched the app; the ref stops a response being
+  // replayed on every re-render.
+  const lastResponse = Notifications.useLastNotificationResponse();
+  const handled = useRef<string | null>(null);
+  useEffect(() => {
+    if (!session || loading || !lastResponse) return;
+    const id = lastResponse.notification.request.identifier;
+    if (handled.current === id) return;
+    handled.current = id;
+    const url = lastResponse.notification.request.content.data?.url;
+    if (typeof url === 'string') router.push(url as never);
+  }, [lastResponse, session, loading]);
 
   if (loading || !fontsLoaded) {
     return (

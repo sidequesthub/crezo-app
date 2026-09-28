@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { syncReminders } from './reminders';
 import {
   afterCursor, pageWindow, toPage, PAGE_SIZE,
   type Cursor, type Page,
@@ -154,6 +155,7 @@ export async function updateDeal(id: string, patch: Partial<DealInput>): Promise
 export async function deleteDeal(id: string): Promise<void> {
   const { error } = await supabase.from('deals').delete().eq('id', id);
   if (error) throw new Error(error.message);
+  syncReminders();
 }
 
 /* Brands ------------------------------------------------------------------ */
@@ -208,12 +210,14 @@ export async function addDeliverable(
     .single();
 
   if (error) throw new Error(error.message);
+  syncReminders({ askPermission: !!dueDate });
   return data as Deliverable;
 }
 
 export async function setDeliverableStatus(id: string, status: string): Promise<void> {
   const { error } = await supabase.from('deliverables').update({ status }).eq('id', id);
   if (error) throw new Error(error.message);
+  syncReminders();
 }
 
 export async function updateDeliverable(
@@ -224,6 +228,7 @@ export async function updateDeliverable(
 ): Promise<void> {
   const { error } = await supabase.from('deliverables').update(patch).eq('id', id);
   if (error) throw new Error(error.message);
+  syncReminders({ askPermission: !!patch.due_date });
 }
 
 /**
@@ -268,6 +273,7 @@ export async function listDeliverableOptions(creatorId: string): Promise<
 export async function deleteDeliverable(id: string): Promise<void> {
   const { error } = await supabase.from('deliverables').delete().eq('id', id);
   if (error) throw new Error(error.message);
+  syncReminders();
 }
 
 /* Helpers ----------------------------------------------------------------- */

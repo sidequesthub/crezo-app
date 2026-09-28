@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { syncReminders } from './reminders';
 import { PAGE_SIZE } from './pagination';
 import { periodRange, ALL_TIME, type Period } from './financialYear';
 import { getCreatorId } from './contentSlots';
@@ -211,6 +212,7 @@ export async function updateInvoice(
     .eq('id', id);
 
   if (error) throw new Error(error.message);
+  syncReminders();
 }
 
 /**
@@ -220,6 +222,7 @@ export async function updateInvoice(
 export async function issueInvoice(id: string): Promise<number> {
   const { data, error } = await supabase.rpc('issue_invoice', { invoice_id: id });
   if (error) throw new Error(error.message);
+  syncReminders();
   return Number(data);
 }
 
@@ -230,6 +233,7 @@ export async function issueInvoice(id: string): Promise<number> {
 export async function cancelInvoice(id: string, reason: string): Promise<void> {
   const { error } = await supabase.rpc('cancel_invoice', { invoice_id: id, reason });
   if (error) throw new Error(error.message);
+  syncReminders();
 }
 
 /**
@@ -271,6 +275,7 @@ export async function reviseInvoice(
     .single();
 
   if (error) throw new Error(error.message);
+  syncReminders();
   return normalise([data])[0];
 }
 
@@ -287,11 +292,13 @@ export async function setInvoiceStatus(id: string, status: InvoiceStatus): Promi
 
   const { error } = await supabase.from('invoices').update(patch).eq('id', id);
   if (error) throw new Error(error.message);
+  syncReminders({ askPermission: status === 'sent' });
 }
 
 export async function deleteInvoice(id: string): Promise<void> {
   const { error } = await supabase.from('invoices').delete().eq('id', id);
   if (error) throw new Error(error.message);
+  syncReminders();
 }
 
 /** Brands available as invoice recipients, with the fields the invoice needs. */
