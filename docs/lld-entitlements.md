@@ -1,7 +1,11 @@
 # LLD — Plans, features and entitlements
 
-Status: **proposed** (2026-09-28). The design is final; the proposed tier
-values in §3 need a product decision before they're seeded.
+Status (2026-09-28):
+- **Built:** the model and resolver (migrations 015–016), the admin Plans
+  matrix and per-user exceptions, the webhook product→plan mapping, and the
+  app helpers (`lib/subscription.ts`, `constants/features.ts`).
+- **Not yet built:** enforcement triggers, `<Gate>`, the paywall and the
+  sync endpoint. These wait on pricing and a store product to buy.
 
 ## 1. Goals
 
@@ -58,18 +62,20 @@ Missing data therefore never grants more than intended.
 
 ### Proposed catalog
 
-The values below are a proposal. Pricing follows the spec (₹299–499/month).
+**Decided 2026-09-28: one paid tier, Pro.** A second tier is a data change
+(a plan row plus its values in the admin matrix), so it can come later with
+no code. Pro's price is not set yet; the spec suggests ₹299–499/month.
 
-| Feature key | Kind | Free | Creator ₹299 | Pro ₹499 | Enforced in |
-|---|---|---|---|---|---|
-| `deals.active_max` | limit | 5 | 25 | ∞ | DB trigger on `deals` insert |
-| `invoices.issued_per_month` | limit | 5 | 25 | ∞ | `issue_invoice()` RPC |
-| `invoices.branding` (logo, signature, no "Made with Crezo") | bool | ✗ | ✓ | ✓ | client (PDF is rendered on device) |
-| `invoices.bill_on_behalf` (agency billing) | bool | ✗ | ✗ | ✓ | DB trigger on `invoices` |
-| `mediakit.remove_branding` | bool | ✗ | ✓ | ✓ | `get_media_kit()` (server-rendered page) |
-| `vault.folders_max` | limit | 3 | ∞ | ∞ | DB trigger on `vault_folders` insert |
-| `reports.fy_export` (FY earnings + TDS statement for ITR) *(future)* | bool | ✗ | ✗ | ✓ | server export endpoint |
-| `mediakit.analytics` *(future)* | bool | ✗ | ✗ | ✓ | query RLS |
+| Feature key | Kind | Free | Pro | Enforced in |
+|---|---|---|---|---|
+| `deals.active_max` | limit | 5 | ∞ | DB trigger on `deals` insert |
+| `invoices.issued_per_month` | limit | 5 | ∞ | `issue_invoice()` RPC |
+| `invoices.branding` (logo, signature, no "Made with Crezo") | bool | ✗ | ✓ | client (PDF is rendered on device) |
+| `invoices.bill_on_behalf` (agency billing) | bool | ✗ | ✓ | DB trigger on `invoices` |
+| `mediakit.remove_branding` | bool | ✗ | ✓ | `get_media_kit()` (server-rendered page) |
+| `vault.folders_max` | limit | 3 | ∞ | DB trigger on `vault_folders` insert |
+| `reports.fy_export` (FY earnings + TDS statement for ITR) *(future)* | bool | ✗ | ✓ | server export endpoint |
+| `mediakit.analytics` *(future)* | bool | ✗ | ✓ | query RLS |
 
 **Always free:** calendar and content slots; the deal pipeline, up to the
 limit; deliverables and approval states;
@@ -349,8 +355,8 @@ This is a product call, listed in §13.
 
 ## 13. Decisions needed
 
-1. **Tiers and values in §3.** Two paid tiers or one to start? Are the free
-   limits (5 active deals, 5 invoices/month, 3 folders) right?
+1. ~~Tiers~~ **Decided: one paid tier (Pro).** Still open: are the free
+   limits (5 active deals, 5 invoices/month, 3 folders) right, and Pro's price?
 2. ~~GST behind a paywall?~~ **Decided 2026-09-28: no.** GST is compliance,
    and every creator invoices. See principle 6.
 3. **Launch-day treatment of existing users:** comp them or not.
