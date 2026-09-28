@@ -19,7 +19,9 @@ interface PlatformMeta {
 export const PLATFORMS: Record<ContentPlatform, PlatformMeta> = {
   ig_reel: { label: 'Instagram Reel', icon: 'logo-instagram', tint: '#E1477E' },
   yt_video: { label: 'YouTube Video', icon: 'logo-youtube', tint: '#FF4E45' },
-  yt_short: { label: 'YouTube Short', icon: 'logo-youtube', tint: '#FF7A45' },
+  // Its own glyph: sharing logo-youtube with yt_video made the two
+  // indistinguishable anywhere the label isn't shown.
+  yt_short: { label: 'YouTube Short', icon: 'phone-portrait-outline', tint: '#FF7A45' },
   story: { label: 'Story', icon: 'camera', tint: '#A97BFF' },
   post: { label: 'Post', icon: 'image', tint: '#4B8EFF' },
   other: { label: 'Other', icon: 'document-text', tint: '#8B90A0' },

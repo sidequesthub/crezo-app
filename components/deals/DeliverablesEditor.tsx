@@ -10,7 +10,17 @@ import {
   updateDeliverable,
   type Deliverable,
 } from '@/lib/deals';
-import { toISODate, fromISODate, addDays } from '@/lib/dates';
+import { fromISODate } from '@/lib/dates';
+import { DateField } from '@/components/ui/DateField';
+
+const SHORT_LABEL: Record<ContentPlatform, string> = {
+  ig_reel: 'Reel',
+  yt_video: 'YT Video',
+  yt_short: 'YT Short',
+  story: 'Story',
+  post: 'Post',
+  other: 'Other',
+};
 
 interface Props {
   dealId: string;
@@ -66,21 +76,10 @@ export function DeliverablesEditor({ dealId, items, onChanged }: Props) {
     }
   }
 
-  async function shiftDue(d: Deliverable, days: number) {
-    const base = d.due_date ? fromISODate(d.due_date) : new Date();
-    const next = toISODate(addDays(base, days));
+  async function setRowDue(d: Deliverable, next: string | null) {
     onChanged(items.map((x) => (x.id === d.id ? { ...x, due_date: next } : x)));
     try {
       await updateDeliverable(d.id, { due_date: next });
-    } catch {
-      onChanged(items);
-    }
-  }
-
-  async function clearDue(d: Deliverable) {
-    onChanged(items.map((x) => (x.id === d.id ? { ...x, due_date: null } : x)));
-    try {
-      await updateDeliverable(d.id, { due_date: null });
     } catch {
       onChanged(items);
     }
@@ -136,27 +135,12 @@ export function DeliverablesEditor({ dealId, items, onChanged }: Props) {
             </View>
 
             {isOpen && (
-              <View style={styles.dueEditor}>
-                <Pressable onPress={() => shiftDue(d, -1)} hitSlop={6} style={styles.dueStep}>
-                  <Ionicons name="chevron-back" size={16} color={Colors.primary} />
-                </Pressable>
-                <Text style={styles.dueValue}>
-                  {d.due_date
-                    ? fromISODate(d.due_date).toLocaleDateString('en-IN', {
-                        weekday: 'short',
-                        day: 'numeric',
-                        month: 'short',
-                      })
-                    : 'Tap ▸ to set a date'}
-                </Text>
-                <Pressable onPress={() => shiftDue(d, 1)} hitSlop={6} style={styles.dueStep}>
-                  <Ionicons name="chevron-forward" size={16} color={Colors.primary} />
-                </Pressable>
-                {d.due_date && (
-                  <Pressable onPress={() => clearDue(d)} hitSlop={6}>
-                    <Text style={styles.clearDue}>Clear</Text>
-                  </Pressable>
-                )}
+              <View style={styles.rowEditor}>
+                <DateField
+                  compact
+                  value={d.due_date}
+                  onChange={(next) => setRowDue(d, next)}
+                />
               </View>
             )}
           </View>
@@ -168,14 +152,16 @@ export function DeliverablesEditor({ dealId, items, onChanged }: Props) {
         <TextInput
           value={draft}
           onChangeText={setDraft}
-          placeholder="Add a deliverable…"
+          placeholder="e.g. 1 Reel — product unboxing"
           placeholderTextColor="rgba(193, 198, 215, 0.4)"
           style={styles.addInput}
           onSubmitEditing={add}
           returnKeyType="done"
         />
 
-        <View style={styles.platformRow}>
+        {/* Labelled, because icons alone could not tell a YouTube video from a
+            Short, or a Story from a Post. */}
+        <View style={styles.typeWrap}>
           {PLATFORM_ORDER.map((p) => {
             const m = PLATFORMS[p];
             const active = platform === p;
@@ -183,61 +169,30 @@ export function DeliverablesEditor({ dealId, items, onChanged }: Props) {
               <Pressable
                 key={p}
                 onPress={() => setPlatform(p)}
-                style={[styles.pChip, active && { backgroundColor: `${m.tint}26` }]}
+                style={[
+                  styles.typeChip,
+                  active && { backgroundColor: `${m.tint}22`, borderColor: `${m.tint}66` },
+                ]}
               >
-                <Ionicons
-                  name={m.icon}
-                  size={13}
-                  color={active ? m.tint : Colors.onSurfaceVariant}
-                />
+                <Ionicons name={m.icon} size={14} color={active ? m.tint : Colors.onSurfaceVariant} />
+                <Text style={[styles.typeText, active && { color: Colors.onSurface }]}>
+                  {SHORT_LABEL[p]}
+                </Text>
               </Pressable>
             );
           })}
         </View>
 
-        <View style={styles.addFooter}>
-          {due ? (
-            <View style={styles.dueEditor}>
-              <Pressable
-                onPress={() => setDue(toISODate(addDays(fromISODate(due), -1)))}
-                hitSlop={6}
-                style={styles.dueStep}
-              >
-                <Ionicons name="chevron-back" size={16} color={Colors.primary} />
-              </Pressable>
-              <Text style={styles.dueValue}>
-                {fromISODate(due).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-              </Text>
-              <Pressable
-                onPress={() => setDue(toISODate(addDays(fromISODate(due), 1)))}
-                hitSlop={6}
-                style={styles.dueStep}
-              >
-                <Ionicons name="chevron-forward" size={16} color={Colors.primary} />
-              </Pressable>
-              <Pressable onPress={() => setDue(null)} hitSlop={6}>
-                <Text style={styles.clearDue}>Clear</Text>
-              </Pressable>
-            </View>
-          ) : (
-            <Pressable
-              onPress={() => setDue(toISODate(addDays(new Date(), 7)))}
-              style={styles.setDue}
-            >
-              <Ionicons name="calendar-outline" size={14} color={Colors.primary} />
-              <Text style={styles.setDueText}>Add due date</Text>
-            </Pressable>
-          )}
+        <DateField compact value={due} onChange={setDue} />
 
-          <Pressable
-            onPress={add}
-            disabled={!draft.trim() || busy}
-            style={[styles.addButton, !draft.trim() && { opacity: 0.4 }]}
-          >
-            <Ionicons name="add" size={18} color={Colors.onPrimaryContainer} />
-            <Text style={styles.addButtonText}>Add</Text>
-          </Pressable>
-        </View>
+        <Pressable
+          onPress={add}
+          disabled={!draft.trim() || busy}
+          style={[styles.addButton, (!draft.trim() || busy) && { opacity: 0.4 }]}
+        >
+          <Ionicons name="add" size={18} color={Colors.onPrimaryContainer} />
+          <Text style={styles.addButtonText}>Add deliverable</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -285,71 +240,37 @@ const styles = StyleSheet.create({
     color: 'rgba(193, 198, 215, 0.45)',
   },
 
-  dueEditor: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingBottom: 11,
-  },
-  dueStep: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surfaceContainerHigh,
-  },
-  dueValue: {
-    flex: 1,
-    textAlign: 'center',
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 13,
-    color: Colors.onSurface,
-  },
-  clearDue: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 11,
-    color: Colors.onSurfaceVariant,
-  },
 
+  rowEditor: { paddingHorizontal: 12, paddingBottom: 12, paddingLeft: 46 },
   addBox: {
     backgroundColor: Colors.surfaceContainerLow,
-    borderRadius: 14,
-    padding: 12,
-    gap: 10,
+    borderRadius: 16,
+    padding: 14,
+    gap: 14,
   },
+  typeWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  typeChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999,
+    backgroundColor: Colors.surfaceContainerHigh,
+    borderWidth: 1, borderColor: 'transparent',
+  },
+  typeText: { fontFamily: 'Manrope_600SemiBold', fontSize: 13, color: Colors.onSurfaceVariant },
   addInput: {
     fontFamily: 'Manrope_500Medium',
-    fontSize: 14,
+    fontSize: 15,
     color: Colors.onSurface,
-    padding: 0,
+    paddingVertical: 4,
   },
-  platformRow: { flexDirection: 'row', gap: 6 },
-  pChip: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surfaceContainerHigh,
-  },
-  addFooter: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  setDue: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-  },
-  setDueText: { fontFamily: 'Manrope_600SemiBold', fontSize: 12, color: Colors.primary },
+  // Full width on its own row: sharing a row with the date control is what
+  // pushed it off the right edge.
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 999,
+    justifyContent: 'center',
+    gap: 6,
+    height: 46,
+    borderRadius: 14,
     backgroundColor: Colors.primary,
   },
   addButtonText: {

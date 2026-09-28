@@ -14,9 +14,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
+import { DateField } from '@/components/ui/DateField';
 import { DEAL_STATUS_ORDER, DEAL_STATUSES, type DealStatus } from '@/constants/deals';
 import { listBrands, type Brand, type DealInput } from '@/lib/deals';
-import { fromISODate, addDays, toISODate } from '@/lib/dates';
 
 export interface DealFormValues extends DealInput {
   /** Free-typed brand name; resolved to a brand row on save. */
@@ -190,45 +190,7 @@ export function DealForm({
           </Field>
 
           <Field label="Due date — optional">
-            {endDate ? (
-              <View style={styles.dateRow}>
-                <Pressable
-                  onPress={() => setEndDate(toISODate(addDays(fromISODate(endDate), -1)))}
-                  hitSlop={8}
-                  style={styles.dateStep}
-                >
-                  <Ionicons name="chevron-back" size={18} color={Colors.primary} />
-                </Pressable>
-                <Text style={styles.dateText}>
-                  {fromISODate(endDate).toLocaleDateString('en-IN', {
-                    weekday: 'short',
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
-                </Text>
-                <Pressable
-                  onPress={() => setEndDate(toISODate(addDays(fromISODate(endDate), 1)))}
-                  hitSlop={8}
-                  style={styles.dateStep}
-                >
-                  <Ionicons name="chevron-forward" size={18} color={Colors.primary} />
-                </Pressable>
-              </View>
-            ) : (
-              <Pressable
-                onPress={() => setEndDate(toISODate(addDays(new Date(), 14)))}
-                style={styles.addDate}
-              >
-                <Ionicons name="calendar-outline" size={16} color={Colors.primary} />
-                <Text style={styles.addDateText}>Set a due date</Text>
-              </Pressable>
-            )}
-            {endDate && (
-              <Pressable onPress={() => setEndDate(null)} style={styles.clearDate}>
-                <Text style={styles.clearDateText}>Clear date</Text>
-              </Pressable>
-            )}
+            <DateField value={endDate} onChange={setEndDate} placeholder="Set a due date" />
           </Field>
 
           {children}
@@ -348,40 +310,6 @@ const styles = StyleSheet.create({
     color: Colors.onSurfaceVariant,
   },
 
-  dateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.surfaceContainerLow,
-    borderRadius: 14,
-    paddingHorizontal: 8,
-    paddingVertical: 10,
-  },
-  dateStep: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surfaceContainerHigh,
-  },
-  dateText: { fontFamily: 'Manrope_700Bold', fontSize: 15, color: Colors.onSurface },
-  addDate: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: Colors.surfaceContainerLow,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  addDateText: { fontFamily: 'Manrope_600SemiBold', fontSize: 14, color: Colors.primary },
-  clearDate: { alignSelf: 'flex-start', paddingVertical: 4 },
-  clearDateText: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 12,
-    color: Colors.onSurfaceVariant,
-  },
 
   errorBox: {
     flexDirection: 'row',
