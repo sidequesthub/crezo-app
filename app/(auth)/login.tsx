@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,8 @@ import * as WebBrowser from 'expo-web-browser';
 import * as QueryParams from 'expo-auth-session/build/QueryParams';
 import { supabase } from '@/lib/supabase';
 import { canUseNativeGoogleSignIn, getGoogleIdToken } from '@/lib/googleSignIn';
+import { appleSignInAvailable, signInWithApple } from '@/lib/appleSignIn';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { Colors } from '@/constants/Colors';
 import { Wordmark } from '@/components/brand/Wordmark';
 
@@ -35,6 +37,25 @@ function openLegal(url: string) {
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [appleAvailable, setAppleAvailable] = useState(false);
+
+  useEffect(() => {
+    appleSignInAvailable().then(setAppleAvailable);
+  }, []);
+
+  async function handleApple() {
+    setLoading(true);
+    setError(null);
+    try {
+      await signInWithApple();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Sign in failed';
+      setError(msg);
+      Alert.alert('Sign in error', msg);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function signInWithGoogle() {
     setLoading(true);
@@ -98,6 +119,16 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.actions}>
+          {/* Apple's own button, as its guidelines require; white reads best on obsidian. */}
+          {appleAvailable && (
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+              cornerRadius={14}
+              style={styles.appleButton}
+              onPress={handleApple}
+            />
+          )}
           <Pressable
             onPress={signInWithGoogle}
             disabled={loading}
@@ -235,6 +266,10 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: 16,
+  },
+  appleButton: {
+    height: 58,
+    width: '100%',
   },
   glassButton: {
     flexDirection: 'row',
