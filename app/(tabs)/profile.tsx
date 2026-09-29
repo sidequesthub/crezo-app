@@ -117,6 +117,11 @@ export default function ProfileScreen() {
             onPress={() => router.push('/settings/payment')}
           />
           <Row
+            icon="calendar-outline"
+            label="Calendar sync"
+            onPress={() => router.push('/settings/calendar')}
+          />
+          <Row
             icon="notifications-outline"
             label="Notifications"
             onPress={() => router.push('/settings/notifications')}

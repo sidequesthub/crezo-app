@@ -110,6 +110,7 @@ export default function RootLayout() {
         <Stack.Screen name="settings/profile" />
         <Stack.Screen name="settings/payment" />
         <Stack.Screen name="settings/notifications" />
+        <Stack.Screen name="settings/calendar" />
         <Stack.Screen name="settings/privacy" />
         <Stack.Screen name="settings/support" />
         <Stack.Screen name="invoices/index" />
