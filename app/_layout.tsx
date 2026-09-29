@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet, AppState } from 'react-native';
@@ -18,6 +18,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useAuth } from '@/hooks/useAuth';
 import { Colors } from '@/constants/Colors';
 import { syncReminders } from '@/lib/reminders';
+import { hydrateIdentity, clearIdentity } from '@/lib/identity';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -35,11 +36,22 @@ export default function RootLayout() {
     Manrope_700Bold,
   });
 
+  // The cached name and photo load with the fonts, so the first frame of the
+  // home header already has them.
+  const [identityReady, setIdentityReady] = useState(false);
   useEffect(() => {
-    if (!loading && fontsLoaded) {
+    hydrateIdentity().finally(() => setIdentityReady(true));
+  }, []);
+
+  useEffect(() => {
+    if (!loading && fontsLoaded && identityReady) {
       SplashScreen.hideAsync();
     }
-  }, [loading, fontsLoaded]);
+  }, [loading, fontsLoaded, identityReady]);
+
+  useEffect(() => {
+    if (!loading && !session) clearIdentity();
+  }, [session, loading]);
 
   useEffect(() => {
     if (loading) return;
@@ -79,7 +91,7 @@ export default function RootLayout() {
     if (typeof url === 'string') router.push(url as never);
   }, [lastResponse, session, loading]);
 
-  if (loading || !fontsLoaded) {
+  if (loading || !fontsLoaded || !identityReady) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={Colors.primary} />

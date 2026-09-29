@@ -7,7 +7,6 @@ import {
   Pressable,
   ActivityIndicator,
   RefreshControl,
-  Image,
   Animated,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,6 +19,8 @@ import { Colors } from '@/constants/Colors';
 import { Wordmark } from '@/components/brand/Wordmark';
 import { TAB_BAR_HEIGHT, FLOATING_GAP, MIN_BOTTOM_INSET } from '@/constants/Layout';
 import { supabase } from '@/lib/supabase';
+import { useIdentity, setIdentity } from '@/lib/identity';
+import { Image as CachedImage } from 'expo-image';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { FloatingActionButton } from '@/components/ui/FloatingActionButton';
 import { toISODate, startOfDay, addDays, isSameDay } from '@/lib/dates';
@@ -99,8 +100,9 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const scrollY = useRef(new Animated.Value(0)).current;
-  const [userName, setUserName] = useState('Creator');
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const identity = useIdentity();
+  const userName = (identity?.name ?? 'Creator').split(' ')[0];
+  const avatarUrl = identity?.avatarUrl ?? null;
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
@@ -119,13 +121,12 @@ export default function HomeScreen() {
       if (!user) return;
 
       const meta = user.user_metadata ?? {};
-      const name =
+      const metaName =
         (meta.full_name as string | undefined) ??
         (meta.name as string | undefined) ??
         user.email?.split('@')[0] ??
         'Creator';
-      setUserName(name.split(' ')[0]);
-      setAvatarUrl((meta.avatar_url as string | undefined) ?? null);
+      const metaAvatar = (meta.avatar_url as string | undefined) ?? null;
 
       const { data: creator } = await supabase
         .from('creators')
@@ -133,12 +134,17 @@ export default function HomeScreen() {
         .eq('user_id', user.id)
         .single();
 
+      // One write with the final answer — the Crezo profile wins over Google's
+      // — so the header never steps through intermediate photos.
+      setIdentity({
+        name: creator?.name ? String(creator.name) : metaName,
+        avatarUrl: creator?.avatar_url ?? metaAvatar,
+      });
+
       if (!creator) {
         setLoading(false);
         return;
       }
-      if (creator.name) setUserName(String(creator.name).split(' ')[0]);
-      if (creator.avatar_url) setAvatarUrl(creator.avatar_url);
 
       // toISODate formats from local components. `toISOString()` converts to
       // UTC first, which in IST rolls the date back a day at local midnight.
@@ -424,7 +430,7 @@ function TopAppBar({
           <View style={styles.appBarLeft}>
             <View style={styles.avatarRing}>
               {avatarUrl ? (
-                <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+                <CachedImage source={{ uri: avatarUrl }} style={styles.avatar} cachePolicy="memory-disk" transition={0} />
               ) : (
                 <View style={[styles.avatar, styles.avatarFallback]}>
                   <Text style={styles.avatarInitial}>{userName.charAt(0).toUpperCase()}</Text>
@@ -437,12 +443,6 @@ function TopAppBar({
             </View>
           </View>
           <View style={styles.appBarRight}>
-            <Pressable
-              style={({ pressed }) => [styles.iconButton, pressed && { opacity: 0.7 }]}
-              hitSlop={8}
-            >
-              <Ionicons name="notifications-outline" size={22} color={Colors.primary} />
-            </Pressable>
             <Wordmark size={20} />
           </View>
         </View>
@@ -709,14 +709,6 @@ const styles = StyleSheet.create({
     color: Colors.onSurface,
     letterSpacing: -0.3,
     marginTop: 1,
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(233, 228, 218, 0.08)',
   },
 
   /* Stats */

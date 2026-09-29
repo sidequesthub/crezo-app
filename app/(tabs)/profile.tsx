@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, Image, Alert } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -9,12 +9,16 @@ import { supabase } from '@/lib/supabase';
 import { clearSession } from '@/lib/phoneAuth';
 import { clearCreatorCache } from '@/lib/contentSlots';
 import { getProfile, getProfileStats, type CreatorProfile } from '@/lib/profile';
+import { useIdentity } from '@/lib/identity';
+import { Image as CachedImage } from 'expo-image';
 import { getMyMediaKit, type MediaKit } from '@/lib/mediaKit';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [profile, setProfile] = useState<CreatorProfile | null>(null);
+  // Cached at launch, so name and photo show before getProfile() returns.
+  const identity = useIdentity();
   const [stats, setStats] = useState({ deals: 0, content: 0, folders: 0 });
   const [kit, setKit] = useState<MediaKit | null>(null);
 
@@ -45,7 +49,8 @@ export default function ProfileScreen() {
   const bottomInset =
     Math.max(insets.bottom, MIN_BOTTOM_INSET) + TAB_BAR_HEIGHT + FLOATING_GAP;
 
-  const displayName = profile?.name ?? 'Creator';
+  const displayName = profile?.name ?? identity?.name ?? 'Creator';
+  const avatarUrl = profile?.avatar_url ?? identity?.avatarUrl ?? null;
   const initial = displayName.charAt(0).toUpperCase();
   const hasPaymentDetails = Boolean(profile?.upi_id || profile?.bank_account_number);
 
@@ -67,8 +72,8 @@ export default function ProfileScreen() {
       >
         <View style={styles.identity}>
           <View style={styles.avatarRing}>
-            {profile?.avatar_url ? (
-              <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
+            {avatarUrl ? (
+              <CachedImage source={{ uri: avatarUrl }} style={styles.avatar} cachePolicy="memory-disk" transition={0} />
             ) : (
               <View style={[styles.avatar, styles.avatarFallback]}>
                 <Text style={styles.avatarInitial}>{initial}</Text>
