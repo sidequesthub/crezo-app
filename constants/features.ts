@@ -25,7 +25,7 @@ export type Feature = BoolFeature | LimitFeature;
  * never shows more than the server will allow.
  */
 export const FREE_LIMITS: Record<LimitFeature, number> = {
-  'deals.active_max': 5,
-  'invoices.issued_per_month': 5,
+  'deals.active_max': 3,
+  'invoices.issued_per_month': 3,
   'vault.folders_max': 3,
 };
