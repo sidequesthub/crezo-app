@@ -130,7 +130,7 @@ export function DealForm({
               value={brandName}
               onChangeText={setBrandName}
               placeholder="e.g. Boat"
-              placeholderTextColor="rgba(193, 198, 215, 0.4)"
+              placeholderTextColor="rgba(200, 196, 188, 0.4)"
               style={styles.input}
               autoCapitalize="words"
             />
@@ -150,7 +150,7 @@ export function DealForm({
               value={title}
               onChangeText={setTitle}
               placeholder="e.g. X-Airdopes launch"
-              placeholderTextColor="rgba(193, 198, 215, 0.4)"
+              placeholderTextColor="rgba(200, 196, 188, 0.4)"
               style={styles.input}
             />
           </Field>
@@ -160,7 +160,7 @@ export function DealForm({
               value={value}
               onChangeText={setValue}
               placeholder="45000"
-              placeholderTextColor="rgba(193, 198, 215, 0.4)"
+              placeholderTextColor="rgba(200, 196, 188, 0.4)"
               style={styles.input}
               keyboardType="number-pad"
             />
@@ -200,7 +200,7 @@ export function DealForm({
               value={usageRights}
               onChangeText={setUsageRights}
               placeholder="e.g. Organic only, 30 days, no whitelisting"
-              placeholderTextColor="rgba(193, 198, 215, 0.4)"
+              placeholderTextColor="rgba(200, 196, 188, 0.4)"
               style={styles.input}
             />
           </Field>
@@ -210,7 +210,7 @@ export function DealForm({
               value={notes}
               onChangeText={setNotes}
               placeholder="Rate discussions, contact person, brief…"
-              placeholderTextColor="rgba(193, 198, 215, 0.4)"
+              placeholderTextColor="rgba(200, 196, 188, 0.4)"
               style={[styles.input, styles.textarea]}
               multiline
               textAlignVertical="top"
@@ -228,13 +228,13 @@ export function DealForm({
         <View style={styles.footer}>
           <Pressable onPress={handleSubmit} disabled={saving} style={styles.submit}>
             <LinearGradient
-              colors={['#ADC6FF', '#4B8EFF']}
+              colors={[Colors.action, Colors.actionDim]}
               start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+              end={{ x: 0, y: 1 }}
               style={styles.submitBg}
             >
               {saving ? (
-                <ActivityIndicator color={Colors.onPrimaryContainer} />
+                <ActivityIndicator color={Colors.onAction} />
               ) : (
                 <Text style={styles.submitText}>{submitLabel}</Text>
               )}
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   submitText: {
     fontFamily: 'Manrope_700Bold',
     fontSize: 15,
-    color: Colors.onPrimaryContainer,
+    color: Colors.onAction,
     letterSpacing: 0.2,
   },
 });

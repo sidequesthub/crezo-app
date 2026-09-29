@@ -159,7 +159,7 @@ export default function DealsScreen() {
               value={query}
               onChangeText={setQuery}
               placeholder="Search brands or campaigns…"
-              placeholderTextColor="rgba(193, 198, 215, 0.4)"
+              placeholderTextColor="rgba(200, 196, 188, 0.4)"
               style={styles.searchInput}
               returnKeyType="search"
             />
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
   summaryDivider: {
     width: 1,
     height: 30,
-    backgroundColor: 'rgba(193, 198, 215, 0.10)',
+    backgroundColor: 'rgba(200, 196, 188, 0.10)',
   },
   summaryValue: {
     fontFamily: 'PlusJakartaSans_800ExtraBold',
@@ -619,7 +619,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 999,
-    backgroundColor: 'rgba(173, 198, 255, 0.18)',
+    backgroundColor: 'rgba(233, 228, 218, 0.18)',
     alignItems: 'center',
   },
   triggerCountText: {
@@ -647,7 +647,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 4,
     borderRadius: 999,
-    backgroundColor: 'rgba(193, 198, 215, 0.25)',
+    backgroundColor: 'rgba(200, 196, 188, 0.25)',
     marginBottom: 12,
   },
   sheetTitle: {
@@ -666,7 +666,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   optionActive: { backgroundColor: Colors.surfaceContainerHigh },
-  optionPressed: { backgroundColor: 'rgba(193, 198, 215, 0.06)' },
+  optionPressed: { backgroundColor: 'rgba(200, 196, 188, 0.06)' },
   optionDot: { width: 8, height: 8, borderRadius: 4 },
   optionText: {
     flex: 1,
@@ -747,7 +747,7 @@ const styles = StyleSheet.create({
   progressTrack: {
     height: 5,
     borderRadius: 999,
-    backgroundColor: 'rgba(193, 198, 215, 0.10)',
+    backgroundColor: 'rgba(200, 196, 188, 0.10)',
     overflow: 'hidden',
   },
   progressFill: { height: '100%', borderRadius: 999, backgroundColor: Colors.primary },

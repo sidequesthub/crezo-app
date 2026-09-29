@@ -501,15 +501,15 @@ const styles = StyleSheet.create({
   dayCellSelected: {
     backgroundColor: Colors.surfaceContainerHigh,
     borderWidth: 1,
-    borderColor: 'rgba(173, 198, 255, 0.35)',
+    borderColor: 'rgba(233, 228, 218, 0.35)',
   },
-  dayCellPressed: { backgroundColor: 'rgba(193, 198, 215, 0.06)' },
+  dayCellPressed: { backgroundColor: 'rgba(200, 196, 188, 0.06)' },
   dayNumber: {
     fontFamily: 'Manrope_500Medium',
     fontSize: 15,
     color: Colors.onSurface,
   },
-  dayNumberMuted: { color: 'rgba(193, 198, 215, 0.28)' },
+  dayNumberMuted: { color: 'rgba(200, 196, 188, 0.28)' },
   dayNumberToday: { color: Colors.primary, fontFamily: 'Manrope_700Bold' },
   dayNumberSelected: { fontFamily: 'Manrope_700Bold' },
   dots: { flexDirection: 'row', gap: 3, height: 5 },

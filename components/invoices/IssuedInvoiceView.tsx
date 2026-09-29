@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   lineMeta: { fontFamily: 'Manrope_400Regular', fontSize: 11, color: Colors.onSurfaceVariant },
   lineAmount: { fontFamily: 'Manrope_700Bold', fontSize: 14, color: Colors.onSurface },
 
-  grandRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(193, 198, 215, 0.12)' },
+  grandRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(200, 196, 188, 0.12)' },
   grandLabel: { fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14, color: Colors.onSurface },
   grandValue: { fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 18, color: Colors.primary },
 

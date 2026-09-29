@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(193, 198, 215, 0.08)',
+    borderColor: 'rgba(200, 196, 188, 0.08)',
     marginBottom: 8,
   },
   title: {
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: 'rgba(193, 198, 215, 0.08)',
+    borderColor: 'rgba(200, 196, 188, 0.08)',
   },
   dot: {
     width: 8,

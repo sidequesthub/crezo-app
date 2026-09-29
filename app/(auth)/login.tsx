@@ -112,9 +112,9 @@ function AmbientGlow() {
       <Svg height="100%" width="100%">
         <Defs>
           <RadialGradient id="glow" cx="0.7" cy="0.15" r="0.6">
-            <Stop offset="0%" stopColor="#4B8EFF" stopOpacity="0.18" />
-            <Stop offset="60%" stopColor="#4B8EFF" stopOpacity="0.04" />
-            <Stop offset="100%" stopColor="#4B8EFF" stopOpacity="0" />
+            <Stop offset="0%" stopColor="#E9E4DA" stopOpacity="0.18" />
+            <Stop offset="60%" stopColor="#E9E4DA" stopOpacity="0.04" />
+            <Stop offset="100%" stopColor="#E9E4DA" stopOpacity="0" />
           </RadialGradient>
           <RadialGradient id="warm" cx="0.1" cy="0.95" r="0.5">
             <Stop offset="0%" stopColor="#FE9400" stopOpacity="0.10" />
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     gap: 12,
     borderWidth: 1,
-    borderColor: 'rgba(193, 198, 215, 0.08)',
+    borderColor: 'rgba(200, 196, 188, 0.08)',
   },
   glassText: {
     fontFamily: 'Manrope_700Bold',

@@ -33,7 +33,7 @@ export function LabelledInput({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="rgba(193, 198, 215, 0.4)"
+        placeholderTextColor="rgba(200, 196, 188, 0.4)"
         style={[
           styles.input,
           multiline && styles.textarea,
@@ -156,7 +156,7 @@ export function SaveButton({
   return (
     <Pressable onPress={onPress} disabled={saving} style={styles.save}>
       <LinearGradient
-        colors={['#ADC6FF', '#4B8EFF']}
+        colors={[Colors.action, Colors.actionDim]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.saveBg}

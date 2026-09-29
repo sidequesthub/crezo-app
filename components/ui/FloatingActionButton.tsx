@@ -40,12 +40,12 @@ export function FloatingActionButton({
       >
         <Animated.View style={[styles.fab, { transform: [{ scale }] }]}>
           <LinearGradient
-            colors={['#ADC6FF', '#4B8EFF']}
+            colors={[Colors.action, Colors.actionDim]}
             start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+            end={{ x: 0, y: 1 }}
             style={styles.bg}
           >
-            <Ionicons name={icon} size={28} color={Colors.onPrimaryContainer} />
+            <Ionicons name={icon} size={26} color={Colors.onAction} />
           </LinearGradient>
         </Animated.View>
       </Pressable>
@@ -56,18 +56,18 @@ export function FloatingActionButton({
 const styles = StyleSheet.create({
   host: { position: 'absolute', right: FAB_EDGE_INSET, zIndex: 20 },
   fab: {
-    borderRadius: 20,
-    // Tinted ambient glow rather than a hard drop shadow, per the design system.
-    shadowColor: '#4B8EFF',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
+    borderRadius: FAB_SIZE / 2,
+    // Soft neutral lift; a coloured glow read as loud on the dark surface.
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.45,
+    shadowRadius: 14,
     elevation: 10,
   },
   bg: {
     width: FAB_SIZE,
     height: FAB_SIZE,
-    borderRadius: 20,
+    borderRadius: FAB_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },

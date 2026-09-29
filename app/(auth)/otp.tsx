@@ -278,7 +278,7 @@ function PrimaryButton({
       ]}
     >
       <LinearGradient
-        colors={disabled ? ['#3A4250', '#2A2F3A'] : ['#ADC6FF', '#4B8EFF']}
+        colors={disabled ? ['#3A3833', '#2A2825'] : [Colors.action, Colors.actionDim]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.cta}
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     marginTop: 36,
     borderWidth: 1,
-    borderColor: 'rgba(193, 198, 215, 0.08)',
+    borderColor: 'rgba(200, 196, 188, 0.08)',
   },
   countryChip: {
     flexDirection: 'row',
@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 24,
-    backgroundColor: 'rgba(193, 198, 215, 0.15)',
+    backgroundColor: 'rgba(200, 196, 188, 0.15)',
   },
   phoneInput: {
     flex: 1,
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceContainerHigh,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(193, 198, 215, 0.08)',
+    borderColor: 'rgba(200, 196, 188, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
   ctaWrap: {
     borderRadius: 14,
     overflow: 'hidden',
-    shadowColor: '#4B8EFF',
+    shadowColor: '#E9E4DA',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 24,

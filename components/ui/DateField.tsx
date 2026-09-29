@@ -198,14 +198,14 @@ const styles = StyleSheet.create({
   },
   handle: {
     alignSelf: 'center', width: 38, height: 4, borderRadius: 999,
-    backgroundColor: 'rgba(193, 198, 215, 0.25)', marginBottom: 16,
+    backgroundColor: 'rgba(200, 196, 188, 0.25)', marginBottom: 16,
   },
   quickRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 18 },
   quick: {
     paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999,
     backgroundColor: Colors.surfaceContainerHigh,
   },
-  quickActive: { backgroundColor: 'rgba(75, 142, 255, 0.2)' },
+  quickActive: { backgroundColor: 'rgba(233, 228, 218, 0.2)' },
   quickText: { fontFamily: 'Manrope_600SemiBold', fontSize: 13, color: Colors.onSurface },
   quickTextActive: { color: Colors.primary },
 
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   day: { flex: 1, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 14 },
   daySelected: { backgroundColor: Colors.primaryContainer },
   dayText: { fontFamily: 'Manrope_600SemiBold', fontSize: 15, color: Colors.onSurface },
-  dayOut: { color: 'rgba(193, 198, 215, 0.3)' },
+  dayOut: { color: 'rgba(200, 196, 188, 0.3)' },
   dayToday: { color: Colors.primary },
   dayTextSelected: { color: Colors.onPrimaryContainer, fontFamily: 'Manrope_700Bold' },
 

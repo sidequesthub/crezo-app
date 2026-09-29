@@ -13,13 +13,13 @@ export const INVOICE_STATUSES: Record<InvoiceStatus, StatusMeta> = {
     label: 'Draft',
     short: 'DRAFT',
     fg: Colors.onSurfaceVariant,
-    bg: 'rgba(193, 198, 215, 0.10)',
+    bg: 'rgba(200, 196, 188, 0.10)',
   },
   sent: {
     label: 'Sent',
     short: 'SENT',
     fg: Colors.primary,
-    bg: 'rgba(173, 198, 255, 0.14)',
+    bg: 'rgba(233, 228, 218, 0.14)',
   },
   acknowledged: {
     label: 'Acknowledged',

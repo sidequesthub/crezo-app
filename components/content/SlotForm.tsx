@@ -158,7 +158,7 @@ export function SlotForm({
               value={title}
               onChangeText={setTitle}
               placeholder="e.g. Monsoon skincare routine"
-              placeholderTextColor="rgba(193, 198, 215, 0.4)"
+              placeholderTextColor="rgba(200, 196, 188, 0.4)"
               style={styles.input}
               returnKeyType="done"
             />
@@ -235,7 +235,7 @@ export function SlotForm({
               value={time}
               onChangeText={setTime}
               placeholder="Time — optional, e.g. 18:30"
-              placeholderTextColor="rgba(193, 198, 215, 0.4)"
+              placeholderTextColor="rgba(200, 196, 188, 0.4)"
               style={[styles.input, styles.inputSpaced]}
               keyboardType="numbers-and-punctuation"
             />
@@ -276,7 +276,7 @@ export function SlotForm({
               value={notes}
               onChangeText={setNotes}
               placeholder="Hook, script beats, references…"
-              placeholderTextColor="rgba(193, 198, 215, 0.4)"
+              placeholderTextColor="rgba(200, 196, 188, 0.4)"
               style={[styles.input, styles.textarea]}
               multiline
               textAlignVertical="top"
@@ -294,13 +294,13 @@ export function SlotForm({
         <View style={styles.footer}>
           <Pressable onPress={handleSubmit} disabled={saving} style={styles.submit}>
             <LinearGradient
-              colors={['#ADC6FF', '#4B8EFF']}
+              colors={[Colors.action, Colors.actionDim]}
               start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+              end={{ x: 0, y: 1 }}
               style={styles.submitBg}
             >
               {saving ? (
-                <ActivityIndicator color={Colors.onPrimaryContainer} />
+                <ActivityIndicator color={Colors.onAction} />
               ) : (
                 <Text style={styles.submitText}>{submitLabel}</Text>
               )}
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   pickerPlaceholder: {
     fontFamily: 'Manrope_400Regular',
     fontSize: 14,
-    color: 'rgba(193, 198, 215, 0.4)',
+    color: 'rgba(200, 196, 188, 0.4)',
   },
 
   backdrop: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.55)', justifyContent: 'flex-end' },
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 4,
     borderRadius: 999,
-    backgroundColor: 'rgba(193, 198, 215, 0.25)',
+    backgroundColor: 'rgba(200, 196, 188, 0.25)',
     marginBottom: 12,
   },
   sheetTitle: {
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   optionActive: { backgroundColor: Colors.surfaceContainerHigh },
-  optionPressed: { backgroundColor: 'rgba(193, 198, 215, 0.06)' },
+  optionPressed: { backgroundColor: 'rgba(200, 196, 188, 0.06)' },
   optionBody: { flex: 1, gap: 2 },
   optionText: {
     flex: 1,
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
   submitText: {
     fontFamily: 'Manrope_700Bold',
     fontSize: 15,
-    color: Colors.onPrimaryContainer,
+    color: Colors.onAction,
     letterSpacing: 0.2,
   },
 });
