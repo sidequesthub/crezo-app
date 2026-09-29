@@ -54,7 +54,8 @@
           "imageWidth": 200
         }
       ],
-      "expo-status-bar"
+      "expo-status-bar",
+      "./plugins/withoutPushEntitlement"
     ],
     "extra": {
       "router": {},
