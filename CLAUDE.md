@@ -17,7 +17,7 @@ Stitch mockups and design-system docs.
 
 ```bash
 npm start                 # Expo dev server (dev client)
-npx expo start --go       # Expo Go — no native build needed, all deps are Go-compatible
+npx expo start --go       # Expo Go — no native build needed; native Google sign-in falls back to web OAuth there
 npx expo start --tunnel   # phone on a different network (see Remote debugging)
 npm run server:dev        # Express backend on :3001, tsx watch
 

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Crezo",
     "slug": "crezo-app",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "scheme": "crezo",
     "userInterfaceStyle": "dark",
@@ -55,7 +55,13 @@
         }
       ],
       "expo-status-bar",
-      "./plugins/withoutPushEntitlement"
+      "./plugins/withoutPushEntitlement",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.54775582157-rskti2i43p73f21ncojpol86kdsdp2uj"
+        }
+      ]
     ],
     "extra": {
       "router": {},

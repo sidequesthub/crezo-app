@@ -13,6 +13,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as WebBrowser from 'expo-web-browser';
 import * as QueryParams from 'expo-auth-session/build/QueryParams';
 import { supabase } from '@/lib/supabase';
+import { canUseNativeGoogleSignIn, getGoogleIdToken } from '@/lib/googleSignIn';
 import { Colors } from '@/constants/Colors';
 import { Wordmark } from '@/components/brand/Wordmark';
 
@@ -28,6 +29,18 @@ export default function LoginScreen() {
     setLoading(true);
     setError(null);
     try {
+      // Native sheet names Crezo; the web flow below shows the Supabase domain.
+      if (canUseNativeGoogleSignIn()) {
+        const idToken = await getGoogleIdToken();
+        if (!idToken) return; // user cancelled
+        const { error: idError } = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: idToken,
+        });
+        if (idError) throw idError;
+        return;
+      }
+
       const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo, skipBrowserRedirect: true },
