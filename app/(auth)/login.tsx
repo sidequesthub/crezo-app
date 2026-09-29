@@ -21,6 +21,17 @@ WebBrowser.maybeCompleteAuthSession();
 
 const redirectTo = 'crezo://auth/callback';
 
+const TERMS_URL = 'https://www.crezo.studio/terms';
+const PRIVACY_URL = 'https://www.crezo.studio/privacy';
+
+function openLegal(url: string) {
+  WebBrowser.openBrowserAsync(url, {
+    presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+    controlsColor: Colors.primary,
+    toolbarColor: Colors.surface,
+  }).catch(() => {});
+}
+
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,12 +81,12 @@ export default function LoginScreen() {
       {/* Ambient atelier glow — subtle, mimics light hitting the obsidian surface */}
       <AmbientGlow />
 
-      <View style={styles.header}>
-        <Wordmark size={22} />
-      </View>
-
       <View style={styles.content}>
         <View style={styles.heroBlock}>
+          {/* The brand leads the hero rather than hiding in the corner. */}
+          <View style={styles.brand}>
+            <Wordmark size={40} />
+          </View>
           <Text style={styles.eyebrow}>YOUR CREATOR HQ</Text>
           <Text style={styles.headline}>
             The studio,{'\n'}
@@ -109,9 +120,23 @@ export default function LoginScreen() {
       <View style={styles.footer}>
         <Text style={styles.footerText}>
           By continuing, you agree to our{' '}
-          <Text style={styles.footerLink}>Terms</Text>
+          <Text
+            accessibilityRole="link"
+            onPress={() => openLegal(TERMS_URL)}
+            style={styles.footerLink}
+            suppressHighlighting={false}
+          >
+            Terms
+          </Text>
           {' & '}
-          <Text style={styles.footerLink}>Privacy</Text>
+          <Text
+            accessibilityRole="link"
+            onPress={() => openLegal(PRIVACY_URL)}
+            style={styles.footerLink}
+            suppressHighlighting={false}
+          >
+            Privacy
+          </Text>
           {'.'}
         </Text>
       </View>
@@ -169,20 +194,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.surface,
   },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
   content: {
     flex: 1,
-    justifyContent: 'space-between',
     paddingHorizontal: 28,
-    paddingTop: 48,
     paddingBottom: 24,
   },
   heroBlock: {
+    // Centred in the space above the button, so the screen has no dead middle.
+    flex: 1,
+    justifyContent: 'center',
     gap: 16,
+  },
+  brand: {
+    marginBottom: 20,
   },
   eyebrow: {
     fontFamily: 'Manrope_600SemiBold',
