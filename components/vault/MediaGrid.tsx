@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     borderWidth: 2.5,
     borderColor: Colors.primary,
     borderRadius: 4,
-    backgroundColor: 'rgba(233, 228, 218, 0.18)',
+    backgroundColor: 'rgba(75, 142, 255, 0.18)',
   },
   durationBadge: {
     position: 'absolute',

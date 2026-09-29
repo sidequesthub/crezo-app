@@ -153,7 +153,7 @@ export function DeliverablesEditor({ dealId, items, onChanged }: Props) {
           value={draft}
           onChangeText={setDraft}
           placeholder="e.g. 1 Reel — product unboxing"
-          placeholderTextColor="rgba(200, 196, 188, 0.4)"
+          placeholderTextColor="rgba(193, 198, 215, 0.4)"
           style={styles.addInput}
           onSubmitEditing={add}
           returnKeyType="done"
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   rowNoDue: {
     fontFamily: 'Manrope_400Regular',
     fontSize: 11,
-    color: 'rgba(200, 196, 188, 0.45)',
+    color: 'rgba(193, 198, 215, 0.45)',
   },
 
 

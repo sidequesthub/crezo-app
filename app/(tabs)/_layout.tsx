@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: 'rgba(20, 20, 20, 0.55)',
     borderWidth: 1,
-    borderColor: 'rgba(200, 196, 188, 0.08)',
+    borderColor: 'rgba(193, 198, 215, 0.08)',
   },
   tab: {
     flex: 1,
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   pill: {
     ...StyleSheet.absoluteFill,
     borderRadius: 18,
-    backgroundColor: 'rgba(233, 228, 218, 0.14)',
+    backgroundColor: 'rgba(75, 142, 255, 0.14)',
   },
   tabPressed: {
     opacity: 0.75,

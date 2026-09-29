@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   footerText: {
     fontFamily: 'Manrope_400Regular',
     fontSize: 12,
-    color: 'rgba(200, 196, 188, 0.45)',
+    color: 'rgba(193, 198, 215, 0.45)',
     textAlign: 'center',
     lineHeight: 18,
   },

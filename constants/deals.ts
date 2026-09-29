@@ -45,7 +45,7 @@ export const DEAL_STATUSES: Record<DealStatus, DealStatusMeta> = {
     label: 'Lead',
     short: 'LEAD',
     fg: Colors.onSurfaceVariant,
-    bg: 'rgba(200, 196, 188, 0.10)',
+    bg: 'rgba(193, 198, 215, 0.10)',
   },
   negotiating: {
     label: 'Negotiating',
@@ -57,13 +57,13 @@ export const DEAL_STATUSES: Record<DealStatus, DealStatusMeta> = {
     label: 'Confirmed',
     short: 'CONFIRMED',
     fg: Colors.primary,
-    bg: 'rgba(233, 228, 218, 0.14)',
+    bg: 'rgba(173, 198, 255, 0.14)',
   },
   in_progress: {
     label: 'In Progress',
     short: 'IN PROGRESS',
     fg: Colors.primary,
-    bg: 'rgba(233, 228, 218, 0.20)',
+    bg: 'rgba(75, 142, 255, 0.20)',
   },
   delivered: {
     label: 'Delivered',

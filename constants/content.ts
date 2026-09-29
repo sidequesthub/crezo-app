@@ -44,10 +44,10 @@ interface StatusMeta {
 
 /** Progression from idea to posted, matching the spec's content pipeline. */
 export const STATUSES: Record<ContentStatus, StatusMeta> = {
-  idea: { label: 'IDEA', fg: Colors.onSurfaceVariant, bg: 'rgba(200, 196, 188, 0.10)' },
+  idea: { label: 'IDEA', fg: Colors.onSurfaceVariant, bg: 'rgba(193, 198, 215, 0.10)' },
   scripted: { label: 'SCRIPTED', fg: Colors.tertiaryFixed, bg: 'rgba(226, 226, 226, 0.12)' },
   shot: { label: 'SHOT', fg: Colors.secondary, bg: 'rgba(255, 188, 124, 0.14)' },
-  edited: { label: 'EDITED', fg: Colors.primary, bg: 'rgba(233, 228, 218, 0.14)' },
+  edited: { label: 'EDITED', fg: Colors.primary, bg: 'rgba(173, 198, 255, 0.14)' },
   posted: { label: 'POSTED', fg: Colors.onPrimary, bg: Colors.primary },
 };
 

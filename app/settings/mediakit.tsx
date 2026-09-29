@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
   },
   sheetHandle: {
     alignSelf: 'center', width: 38, height: 4, borderRadius: 999,
-    backgroundColor: 'rgba(200, 196, 188, 0.25)', marginBottom: 12,
+    backgroundColor: 'rgba(193, 198, 215, 0.25)', marginBottom: 12,
   },
   sheetTitle: {
     fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16,
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999,
     backgroundColor: Colors.surfaceContainerLow,
   },
-  chipOn: { backgroundColor: 'rgba(233, 228, 218, 0.16)' },
+  chipOn: { backgroundColor: 'rgba(75, 142, 255, 0.16)' },
   chipText: { fontFamily: 'Manrope_600SemiBold', fontSize: 13, color: Colors.onSurfaceVariant },
   chipTextOn: { color: Colors.primary },
   note: {

@@ -182,7 +182,7 @@ export function InvoiceForm({
                   value={item.description}
                   onChangeText={(v) => setItem(i, { description: v })}
                   placeholder="e.g. Instagram Reel — product launch"
-                  placeholderTextColor="rgba(200, 196, 188, 0.4)"
+                  placeholderTextColor="rgba(193, 198, 215, 0.4)"
                   style={styles.itemInput}
                 />
                 <View style={styles.itemRow}>
@@ -201,7 +201,7 @@ export function InvoiceForm({
                       value={item.rate ? String(item.rate) : ''}
                       onChangeText={(v) => setItem(i, { rate: Number(v.replace(/[^0-9.]/g, '')) || 0 })}
                       placeholder="0"
-                      placeholderTextColor="rgba(200, 196, 188, 0.4)"
+                      placeholderTextColor="rgba(193, 198, 215, 0.4)"
                       keyboardType="decimal-pad"
                       style={styles.miniInput}
                     />
@@ -274,7 +274,7 @@ export function InvoiceForm({
                     value={sacCode}
                     onChangeText={setSacCode}
                     placeholder="998363"
-                    placeholderTextColor="rgba(200, 196, 188, 0.4)"
+                    placeholderTextColor="rgba(193, 198, 215, 0.4)"
                     keyboardType="number-pad"
                     style={styles.sacInput}
                   />
@@ -305,7 +305,7 @@ export function InvoiceForm({
               value={notes}
               onChangeText={setNotes}
               placeholder="Payment terms, PO number, anything the brand needs"
-              placeholderTextColor="rgba(200, 196, 188, 0.4)"
+              placeholderTextColor="rgba(193, 198, 215, 0.4)"
               style={[styles.itemInput, styles.textarea]}
               multiline
               textAlignVertical="top"
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
   pickerBody: { flex: 1, gap: 2 },
   pickerValue: { fontFamily: 'Manrope_600SemiBold', fontSize: 14, color: Colors.onSurface },
   pickerSub: { fontFamily: 'Manrope_400Regular', fontSize: 11, color: Colors.onSurfaceVariant },
-  pickerPlaceholder: { fontFamily: 'Manrope_400Regular', fontSize: 14, color: 'rgba(200, 196, 188, 0.4)' },
+  pickerPlaceholder: { fontFamily: 'Manrope_400Regular', fontSize: 14, color: 'rgba(193, 198, 215, 0.4)' },
 
   itemCard: { backgroundColor: Colors.surfaceContainerLow, borderRadius: 14, padding: 12, gap: 10 },
   itemHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -484,7 +484,7 @@ const styles = StyleSheet.create({
   totalRow: { flexDirection: 'row', justifyContent: 'space-between' },
   totalLabel: { fontFamily: 'Manrope_500Medium', fontSize: 13, color: Colors.onSurfaceVariant },
   totalValue: { fontFamily: 'Manrope_600SemiBold', fontSize: 13, color: Colors.onSurface },
-  grandRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(200, 196, 188, 0.12)' },
+  grandRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(193, 198, 215, 0.12)' },
   grandLabel: { fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15, color: Colors.onSurface },
   grandValue: { fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 20, color: Colors.primary, letterSpacing: -0.4 },
 
@@ -498,12 +498,12 @@ const styles = StyleSheet.create({
 
   backdrop: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.55)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: Colors.surfaceContainer, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 12, paddingTop: 10, paddingBottom: 34 },
-  sheetHandle: { alignSelf: 'center', width: 38, height: 4, borderRadius: 999, backgroundColor: 'rgba(200, 196, 188, 0.25)', marginBottom: 12 },
+  sheetHandle: { alignSelf: 'center', width: 38, height: 4, borderRadius: 999, backgroundColor: 'rgba(193, 198, 215, 0.25)', marginBottom: 12 },
   sheetTitle: { fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16, color: Colors.onSurface, paddingHorizontal: 10, paddingBottom: 8 },
   sheetEmpty: { fontFamily: 'Manrope_400Regular', fontSize: 13, color: Colors.onSurfaceVariant, textAlign: 'center', padding: 24 },
   option: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 13, borderRadius: 16 },
   optionActive: { backgroundColor: Colors.surfaceContainerHigh },
-  optionPressed: { backgroundColor: 'rgba(200, 196, 188, 0.06)' },
+  optionPressed: { backgroundColor: 'rgba(193, 198, 215, 0.06)' },
   optionBody: { flex: 1, gap: 2 },
   optionText: { fontFamily: 'Manrope_600SemiBold', fontSize: 14, color: Colors.onSurface },
   optionSub: { fontFamily: 'Manrope_400Regular', fontSize: 11, color: Colors.onSurfaceVariant },

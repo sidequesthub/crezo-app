@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
 
   summary: { marginHorizontal: 20, flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surfaceContainerLow, borderRadius: 20, paddingVertical: 16 },
   summaryHalf: { flex: 1, alignItems: 'center', gap: 3 },
-  summaryDivider: { width: 1, height: 30, backgroundColor: 'rgba(200, 196, 188, 0.10)' },
+  summaryDivider: { width: 1, height: 30, backgroundColor: 'rgba(193, 198, 215, 0.10)' },
   summaryValue: { fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 22, color: Colors.primary, letterSpacing: -0.4 },
   summaryLabel: { fontFamily: 'Manrope_600SemiBold', fontSize: 10, color: Colors.onSurfaceVariant, letterSpacing: 1 },
 

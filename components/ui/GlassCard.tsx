@@ -10,7 +10,7 @@ interface GlassCardProps extends ViewProps {
 }
 
 const GLOW_COLORS: Record<Exclude<GlowColor, 'none'>, string> = {
-  primary: '#E9E4DA',
+  primary: '#4B8EFF',
   secondary: '#FE9400',
   neutral: '#E5E2E1',
 };
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceContainerHigh,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(200, 196, 188, 0.08)',
+    borderColor: 'rgba(193, 198, 215, 0.08)',
     overflow: 'hidden',
     position: 'relative',
   },

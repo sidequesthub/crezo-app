@@ -790,11 +790,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceContainer,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(200, 196, 188, 0.05)',
+    borderColor: 'rgba(193, 198, 215, 0.05)',
   },
   dayPillToday: {
     backgroundColor: Colors.surfaceContainerHigh,
-    borderColor: 'rgba(200, 196, 188, 0.12)',
+    borderColor: 'rgba(193, 198, 215, 0.12)',
   },
   dayPillLabel: {
     fontFamily: 'Manrope_700Bold',
@@ -835,7 +835,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     backgroundColor: Colors.surfaceContainer,
     borderWidth: 1,
-    borderColor: 'rgba(200, 196, 188, 0.05)',
+    borderColor: 'rgba(193, 198, 215, 0.05)',
     overflow: 'hidden',
   },
   deadlineAccent: {
@@ -889,7 +889,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(233, 228, 218, 0.12)',
+    backgroundColor: 'rgba(75, 142, 255, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,

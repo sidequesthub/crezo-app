@@ -130,7 +130,7 @@ export function DealForm({
               value={brandName}
               onChangeText={setBrandName}
               placeholder="e.g. Boat"
-              placeholderTextColor="rgba(200, 196, 188, 0.4)"
+              placeholderTextColor="rgba(193, 198, 215, 0.4)"
               style={styles.input}
               autoCapitalize="words"
             />
@@ -150,7 +150,7 @@ export function DealForm({
               value={title}
               onChangeText={setTitle}
               placeholder="e.g. X-Airdopes launch"
-              placeholderTextColor="rgba(200, 196, 188, 0.4)"
+              placeholderTextColor="rgba(193, 198, 215, 0.4)"
               style={styles.input}
             />
           </Field>
@@ -160,7 +160,7 @@ export function DealForm({
               value={value}
               onChangeText={setValue}
               placeholder="45000"
-              placeholderTextColor="rgba(200, 196, 188, 0.4)"
+              placeholderTextColor="rgba(193, 198, 215, 0.4)"
               style={styles.input}
               keyboardType="number-pad"
             />
@@ -200,7 +200,7 @@ export function DealForm({
               value={usageRights}
               onChangeText={setUsageRights}
               placeholder="e.g. Organic only, 30 days, no whitelisting"
-              placeholderTextColor="rgba(200, 196, 188, 0.4)"
+              placeholderTextColor="rgba(193, 198, 215, 0.4)"
               style={styles.input}
             />
           </Field>
@@ -210,7 +210,7 @@ export function DealForm({
               value={notes}
               onChangeText={setNotes}
               placeholder="Rate discussions, contact person, brief…"
-              placeholderTextColor="rgba(200, 196, 188, 0.4)"
+              placeholderTextColor="rgba(193, 198, 215, 0.4)"
               style={[styles.input, styles.textarea]}
               multiline
               textAlignVertical="top"

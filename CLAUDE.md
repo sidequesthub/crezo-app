@@ -152,9 +152,10 @@ mockups (PNG + HTML) sit beside it and are the reference for anything new.
 
 - **Colors come from `constants/Colors.ts`.** No raw hex in screens, except the
   two gradient stops, which are intentional.
-- **The accent is warm ivory, not blue.** The app deliberately departs from the
-  Stitch mockups' blue `primary`. Blue survives only in the Wordmark dot, the
-  LinkedIn brand colour, and the "Post" content-type tint. Don't reintroduce it.
+- **Blue is the accent; primary buttons are pearl.** The FAB and form submit
+  buttons use `Colors.action` / `actionDim` / `onAction`, not the blue
+  gradient — a blue-filled button read as loud. Everything else keeps the
+  Stitch blue `primary`. (An all-ivory theme was tried and rolled back.)
 - **No 1px borders for sectioning.** Depth comes from tonal layering —
   `surface` → `surfaceContainer` → `surfaceContainerHigh`. Where a border is
   unavoidable, use a "ghost border" at ~8% opacity.

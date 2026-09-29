@@ -33,7 +33,7 @@ export function LabelledInput({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="rgba(200, 196, 188, 0.4)"
+        placeholderTextColor="rgba(193, 198, 215, 0.4)"
         style={[
           styles.input,
           multiline && styles.textarea,
@@ -234,6 +234,6 @@ const styles = StyleSheet.create({
   saveText: {
     fontFamily: 'Manrope_700Bold',
     fontSize: 15,
-    color: Colors.onPrimaryContainer,
+    color: Colors.onAction,
   },
 });

@@ -490,7 +490,7 @@ function FolderSheet({
               value={name}
               onChangeText={setName}
               placeholder="New folder name…"
-              placeholderTextColor="rgba(200, 196, 188, 0.4)"
+              placeholderTextColor="rgba(193, 198, 215, 0.4)"
               style={styles.newInput}
               onSubmitEditing={() => {
                 onCreate(name);
@@ -768,7 +768,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 4,
     borderRadius: 999,
-    backgroundColor: 'rgba(200, 196, 188, 0.25)',
+    backgroundColor: 'rgba(193, 198, 215, 0.25)',
     marginBottom: 12,
   },
   sheetTitle: {
@@ -803,7 +803,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 16,
   },
-  optionPressed: { backgroundColor: 'rgba(200, 196, 188, 0.06)' },
+  optionPressed: { backgroundColor: 'rgba(193, 198, 215, 0.06)' },
   optionText: {
     flex: 1,
     fontFamily: 'Manrope_600SemiBold',

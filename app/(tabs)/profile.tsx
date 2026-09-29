@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   stat: { flex: 1, alignItems: 'center', gap: 3 },
-  statDivider: { width: 1, height: 26, backgroundColor: 'rgba(200, 196, 188, 0.10)' },
+  statDivider: { width: 1, height: 26, backgroundColor: 'rgba(193, 198, 215, 0.10)' },
   statValue: {
     fontFamily: 'PlusJakartaSans_800ExtraBold',
     fontSize: 20,
