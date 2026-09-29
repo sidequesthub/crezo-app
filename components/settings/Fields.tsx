@@ -107,7 +107,8 @@ export function InfoRow({
       <View style={styles.rowBody}>
         <Text style={styles.rowLabel}>{label}</Text>
       </View>
-      <Text style={styles.rowValue} numberOfLines={1}>
+      {/* Middle ellipsis keeps both ends of an email readable. */}
+      <Text style={styles.rowValue} numberOfLines={1} ellipsizeMode="middle">
         {value}
       </Text>
     </View>

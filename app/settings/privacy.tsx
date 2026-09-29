@@ -16,14 +16,21 @@ export default function PrivacyScreen() {
   const [profile, setProfile] = useState<CreatorProfile | null>(null);
   const [stats, setStats] = useState({ deals: 0, content: 0, folders: 0 });
   const [error, setError] = useState<string | null>(null);
+  // The auth account, not the profile: Google sign-in has an email and no phone.
+  const [account, setAccount] = useState<{ value: string; icon: 'mail-outline' | 'call-outline' } | null>(null);
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const user = session?.user;
+      if (user?.email) setAccount({ value: user.email, icon: 'mail-outline' });
+      else if (user?.phone) setAccount({ value: `+${user.phone}`, icon: 'call-outline' });
+    });
     getProfile().then(setProfile).catch(() => undefined);
     getProfileStats().then(setStats).catch(() => undefined);
   }, []);
 
   async function signOutEverywhere() {
-    Alert.alert('Sign out?', 'You’ll need your phone number and an OTP to get back in.', [
+    Alert.alert('Sign out?', 'You’ll sign back in with Google on each device.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Sign out',
@@ -91,7 +98,11 @@ export default function PrivacyScreen() {
       subtitle="What Crezo stores, and how to get rid of it."
     >
       <Section label="Account">
-        <InfoRow icon="call-outline" label="Signed in as" value={profile?.phone ?? '—'} />
+        <InfoRow
+          icon={account?.icon ?? 'mail-outline'}
+          label="Signed in as"
+          value={account?.value ?? profile?.email ?? '—'}
+        />
         <InfoRow icon="time-outline" label="Member since" value={memberSince} />
         <InfoRow
           icon="server-outline"
