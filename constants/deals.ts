@@ -38,9 +38,12 @@ interface DealStatusMeta {
 }
 
 export const DEAL_STATUSES: Record<DealStatus, DealStatusMeta> = {
+  // Stored as 'pitched' for compatibility, shown as Lead: most deals for
+  // larger creators arrive inbound, and "Pitched" wrongly implies you reached
+  // out. Lead covers both directions.
   pitched: {
-    label: 'Pitched',
-    short: 'PITCHED',
+    label: 'Lead',
+    short: 'LEAD',
     fg: Colors.onSurfaceVariant,
     bg: 'rgba(193, 198, 215, 0.10)',
   },
