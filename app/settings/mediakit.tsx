@@ -13,7 +13,7 @@ import {
   listBrandOptions, publicUrl, uploadPhoto, EMPTY,
   type MediaKit, type MediaKitData, type BrandOption, type Platform,
 } from '@/lib/mediaKit';
-import { PLATFORMS, platformSpec, profileUrlFor } from '@/constants/platforms';
+import { PLATFORMS, platformSpec, profileUrlFor, audienceLabel } from '@/constants/platforms';
 import { PlatformIcon } from '@/components/brand/PlatformIcon';
 
 export default function MediaKitScreen() {
@@ -255,7 +255,7 @@ export default function MediaKitScreen() {
                 onChangeText={(v) => patchPlatform(p.id, { handle: v })}
                 placeholder={spec?.placeholder ?? '@yourhandle'}
                 hint={link ? link.replace('https://', '') : undefined} />
-              <LabelledInput label="Followers" value={p.followers}
+              <LabelledInput label={audienceLabel(p.network)} value={p.followers}
                 onChangeText={(v) => patchPlatform(p.id, { followers: v })} placeholder="128K" />
               <LabelledInput label="Average views" value={p.avgViews}
                 onChangeText={(v) => patchPlatform(p.id, { avgViews: v })} placeholder="45K" />
@@ -263,7 +263,7 @@ export default function MediaKitScreen() {
           );
         })}
         <ActionRow icon="add-circle-outline" label="Add a platform"
-          description="Followers are typed in by hand — Crezo doesn't read them from Instagram."
+          description="Audience numbers are typed in by hand — Crezo doesn't read them from your platforms."
           onPress={addPlatform} tint={Colors.primary} />
       </Section>
 

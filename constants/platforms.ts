@@ -17,6 +17,8 @@ export interface PlatformSpec {
   /** Shown in the handle field so the expected format is obvious. */
   placeholder: string;
   profileUrl: (handle: string) => string;
+  /** What the platform calls its audience, when it isn't "Followers". */
+  audience?: string;
 }
 
 /** Handles get typed with @, with a full URL pasted in, or bare. Accept all three. */
@@ -40,6 +42,7 @@ export const PLATFORMS: PlatformSpec[] = [
   },
   {
     id: 'youtube',
+    audience: 'Subscribers',
     label: 'YouTube',
     color: '#FF4E45',
     placeholder: '@yourchannel',
@@ -68,6 +71,7 @@ export const PLATFORMS: PlatformSpec[] = [
   },
   {
     id: 'snapchat',
+    audience: 'Subscribers',
     label: 'Snapchat',
     color: '#FFD400',
     placeholder: 'yourhandle',
@@ -84,4 +88,9 @@ export function profileUrlFor(platformId: string, handle: string): string | null
   const clean = normaliseHandle(handle);
   if (!spec || !clean) return null;
   return spec.profileUrl(clean);
+}
+
+/** "Subscribers" on YouTube and Snapchat, "Followers" elsewhere. */
+export function audienceLabel(id: string): string {
+  return PLATFORMS.find((p) => p.id === id)?.audience ?? 'Followers';
 }
