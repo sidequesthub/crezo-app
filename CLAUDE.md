@@ -239,8 +239,6 @@ Decided and parked, with the reason — not a wishlist. Newest first.
 - **Account linking must land before phone OTP goes live.** Signing in with
   Google and later with a phone creates *two* `auth.users` rows and therefore
   two `creators` rows. Cheap to fix now while the user count is tiny.
-- The `listUsers({ perPage: 200 })` ceiling in `upsertSupabaseUser` breaks
-  silently past 200 users. Fix before any real signup volume.
 
 ### Onboarding (designed 2026-09-14, not built)
 

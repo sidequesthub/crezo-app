@@ -66,26 +66,22 @@ export async function verifyPhoneOtp(
 /**
  * Find an existing Supabase auth user by phone, or create one. Returns the user id.
  *
- * Supabase admin SDK does not expose a direct "find by phone" — we list users with
- * a phone filter. For high user counts, replace with a dedicated lookup table.
+ * The lookup is an exact match in auth.users via a service-role-only function
+ * (migration 020). It replaced a listUsers({ perPage: 200 }) scan that missed
+ * everyone past the first 200 users.
  */
 async function upsertSupabaseUser(phoneE164: string): Promise<string> {
   const supabase = getSupabase();
+  const phone = phoneE164.replace('+', '');
 
-  // Try to find existing user. listUsers supports email/phone filters via admin RPC,
-  // but the JS client only supports paginated listUsers. Use a small page and filter
-  // client-side; for production, swap to a `phone_users` table for O(1) lookup.
-  const { data: list, error: listErr } = await supabase.auth.admin.listUsers({
-    page: 1,
-    perPage: 200,
+  const { data: existingId, error: lookupErr } = await supabase.rpc('auth_user_id_by_phone', {
+    p_phone: phone,
   });
-  if (listErr) throw new Error(`User lookup failed: ${listErr.message}`);
-
-  const existing = list.users.find((u) => u.phone === phoneE164.replace('+', ''));
-  if (existing) return existing.id;
+  if (lookupErr) throw new Error(`User lookup failed: ${lookupErr.message}`);
+  if (existingId) return existingId as string;
 
   const { data: created, error: createErr } = await supabase.auth.admin.createUser({
-    phone: phoneE164.replace('+', ''),
+    phone,
     phone_confirm: true,
   });
   if (createErr || !created.user) {
