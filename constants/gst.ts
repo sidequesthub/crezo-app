@@ -10,7 +10,7 @@
  * code. Where a party has no GSTIN the state must be chosen manually.
  */
 
-export const GST_RATE = 28;
+export const GST_RATE = 18;
 
 /** GST state codes, as used in the first two digits of a GSTIN. */
 export const STATE_CODES: Record<string, string> = {
