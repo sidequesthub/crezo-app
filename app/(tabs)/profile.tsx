@@ -12,6 +12,8 @@ import { getProfile, getProfileStats, type CreatorProfile } from '@/lib/profile'
 import { useIdentity } from '@/lib/identity';
 import { Image as CachedImage } from 'expo-image';
 import { getMyMediaKit, type MediaKit } from '@/lib/mediaKit';
+import { getEntitlement } from '@/lib/subscription';
+import { Type } from '@/constants/Typography';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -21,11 +23,16 @@ export default function ProfileScreen() {
   const identity = useIdentity();
   const [stats, setStats] = useState({ deals: 0, content: 0, folders: 0 });
   const [kit, setKit] = useState<MediaKit | null>(null);
+  // An active grant is today's early-access Pro (migration 018).
+  const [earlyAccess, setEarlyAccess] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       getProfile().then(setProfile).catch(() => undefined);
       getProfileStats().then(setStats).catch(() => undefined);
+      getEntitlement()
+        .then((e) => setEarlyAccess(e.source === 'grant'))
+        .catch(() => undefined);
       getMyMediaKit().then(setKit).catch(() => undefined);
     }, []),
   );
@@ -95,6 +102,16 @@ export default function ProfileScreen() {
           <View style={styles.statDivider} />
           <Stat value={stats.folders} label="FOLDERS" />
         </View>
+
+        {earlyAccess && (
+          <View style={styles.earlyAccess}>
+            <Text style={styles.earlyAccessLabel}>Early access</Text>
+            <Text style={styles.earlyAccessBody}>
+              Pro is free during early access. Early members keep it free for 3 months after paid
+              plans launch.
+            </Text>
+          </View>
+        )}
 
         <View style={styles.list}>
           <Row
@@ -248,6 +265,14 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 
+  earlyAccess: {
+    backgroundColor: Colors.surfaceContainerLow,
+    borderRadius: 20,
+    padding: 16,
+    gap: 6,
+  },
+  earlyAccessLabel: { ...Type.label, color: Colors.secondary },
+  earlyAccessBody: { ...Type.bodySmall, color: Colors.onSurfaceVariant },
   list: { gap: 10 },
   row: {
     flexDirection: 'row',
