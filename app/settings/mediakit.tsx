@@ -196,10 +196,6 @@ export default function MediaKitScreen() {
               <Ionicons name="copy-outline" size={16} color={Colors.primary} />
               <Text style={styles.linkBtnText}>Copy</Text>
             </Pressable>
-            <Pressable style={styles.linkBtn} onPress={openKit}>
-              <Ionicons name="globe-outline" size={16} color={Colors.primary} />
-              <Text style={styles.linkBtnText}>Open</Text>
-            </Pressable>
             <Pressable style={styles.linkBtn} onPress={() => Share.share({ message: url })}>
               <Ionicons name="share-outline" size={16} color={Colors.primary} />
               <Text style={styles.linkBtnText}>Share</Text>
