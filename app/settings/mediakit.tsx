@@ -4,6 +4,7 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
+import * as WebBrowser from 'expo-web-browser';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
 import { SettingsScreen, Section } from '@/components/settings/SettingsScreen';
@@ -156,6 +157,17 @@ export default function MediaKitScreen() {
 
   const url = publicUrl(kit.slug);
 
+  // A hidden kit 404s publicly, so say why instead of opening an error page.
+  function openKit() {
+    if (!kit?.isLive) {
+      Alert.alert('Not published yet', 'Publish your media kit to open it on the web.');
+      return;
+    }
+    WebBrowser.openBrowserAsync(url, {
+      presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+    }).catch(() => undefined);
+  }
+
   return (
     <SettingsScreen
       title="Media kit"
@@ -169,7 +181,10 @@ export default function MediaKitScreen() {
     >
       <Section label="Your link">
         <View style={styles.linkCard}>
-          <Text style={styles.link} numberOfLines={1}>{url}</Text>
+          <Pressable onPress={openKit} accessibilityRole="link" style={styles.linkRow}>
+            <Text style={styles.link} numberOfLines={1}>{url}</Text>
+            <Ionicons name="open-outline" size={16} color={Colors.primary} />
+          </Pressable>
           <View style={styles.linkActions}>
             <Pressable
               style={styles.linkBtn}
@@ -180,6 +195,10 @@ export default function MediaKitScreen() {
             >
               <Ionicons name="copy-outline" size={16} color={Colors.primary} />
               <Text style={styles.linkBtnText}>Copy</Text>
+            </Pressable>
+            <Pressable style={styles.linkBtn} onPress={openKit}>
+              <Ionicons name="globe-outline" size={16} color={Colors.primary} />
+              <Text style={styles.linkBtnText}>Open</Text>
             </Pressable>
             <Pressable style={styles.linkBtn} onPress={() => Share.share({ message: url })}>
               <Ionicons name="share-outline" size={16} color={Colors.primary} />
@@ -371,7 +390,8 @@ const styles = StyleSheet.create({
   intro: { padding: 16, borderRadius: 16, backgroundColor: Colors.surfaceContainerLow },
   introText: { fontFamily: 'Manrope_400Regular', fontSize: 13, lineHeight: 21, color: Colors.onSurfaceVariant },
   linkCard: { padding: 16, borderRadius: 16, backgroundColor: Colors.surfaceContainerLow, gap: 12 },
-  link: { fontFamily: 'Manrope_600SemiBold', fontSize: 14, color: Colors.onSurface },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  link: { flexShrink: 1, fontFamily: 'Manrope_600SemiBold', fontSize: 14, color: Colors.primary },
   linkActions: { flexDirection: 'row', gap: 10 },
   linkBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8,
