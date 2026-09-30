@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
+import { Type } from '@/constants/Typography';
 import {
   calculateTax, stateCodeFromGstin, stateName, STATE_OPTIONS,
   lineTotal, GST_RATE, type LineItem,
@@ -494,7 +495,7 @@ const styles = StyleSheet.create({
   footer: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 },
   submit: { borderRadius: 16, overflow: 'hidden' },
   submitBg: { paddingVertical: 16, alignItems: 'center' },
-  submitText: { fontFamily: 'Manrope_700Bold', fontSize: 15, color: Colors.onAction },
+  submitText: { ...Type.button, color: Colors.onAction },
 
   backdrop: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.55)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: Colors.surfaceContainer, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 12, paddingTop: 10, paddingBottom: 34 },

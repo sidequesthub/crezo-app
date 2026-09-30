@@ -1,5 +1,4 @@
 import { Platform } from 'react-native';
-import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import { supabase } from '@/lib/supabase';
 
@@ -9,10 +8,24 @@ import { supabase } from '@/lib/supabase';
  * sent hashed to Apple and raw to Supabase, which re-hashes it to check the
  * token was minted for this request.
  */
+type AppleAuth = typeof import('expo-apple-authentication');
+
+/**
+ * Loaded lazily: builds before 19 lack the native module, and an OTA update
+ * reaching one of them must hide the button rather than crash on import.
+ */
+function appleAuth(): AppleAuth | null {
+  try {
+    return require('expo-apple-authentication') as AppleAuth;
+  } catch {
+    return null;
+  }
+}
+
 export async function appleSignInAvailable(): Promise<boolean> {
   if (Platform.OS !== 'ios') return false;
   try {
-    return await AppleAuthentication.isAvailableAsync();
+    return (await appleAuth()?.isAvailableAsync()) ?? false;
   } catch {
     return false;
   }
@@ -20,10 +33,12 @@ export async function appleSignInAvailable(): Promise<boolean> {
 
 /** Resolves false if the user cancelled; throws on any other failure. */
 export async function signInWithApple(): Promise<boolean> {
+  const AppleAuthentication = appleAuth();
+  if (!AppleAuthentication) throw new Error('Sign in with Apple needs the latest app version.');
   const rawNonce = Crypto.randomUUID();
   const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, rawNonce);
 
-  let credential: AppleAuthentication.AppleAuthenticationCredential;
+  let credential: import('expo-apple-authentication').AppleAuthenticationCredential;
   try {
     credential = await AppleAuthentication.signInAsync({
       requestedScopes: [

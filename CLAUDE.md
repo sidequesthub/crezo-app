@@ -150,6 +150,9 @@ The design system is "Obsidian Flux / Digital Atelier" — see
 `../design/stitch_home_dashboard 2/obsidian_flux/DESIGN.md`. Screen-by-screen
 mockups (PNG + HTML) sit beside it and are the reference for anything new.
 
+- **Read `docs/ui-consistency.md` before any UI change.** Peers share one
+  component, text uses the `Type` scale in `constants/Typography.ts`, and a
+  change is checked next to its neighbours before it ships.
 - **Colors come from `constants/Colors.ts`.** No raw hex in screens, except the
   two gradient stops, which are intentional.
 - **Blue is the accent; primary buttons are pearl.** The FAB and form submit

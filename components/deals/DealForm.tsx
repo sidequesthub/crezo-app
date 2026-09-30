@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
+import { Type } from '@/constants/Typography';
 import { DateField } from '@/components/ui/DateField';
 import { DEAL_STATUS_ORDER, DEAL_STATUSES, type DealStatus } from '@/constants/deals';
 import { listBrands, type Brand, type DealInput } from '@/lib/deals';
@@ -329,10 +330,5 @@ const styles = StyleSheet.create({
   footer: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 },
   submit: { borderRadius: 16, overflow: 'hidden' },
   submitBg: { paddingVertical: 16, alignItems: 'center', justifyContent: 'center' },
-  submitText: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 15,
-    color: Colors.onAction,
-    letterSpacing: 0.2,
-  },
+  submitText: { ...Type.button, color: Colors.onAction },
 });
