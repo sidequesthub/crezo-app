@@ -62,7 +62,17 @@ A typecheck proves nothing about looks. Before calling a UI change done:
    (native-only UI, no simulator run), say so in the commit or the handoff —
    don't imply it was verified.
 
-## 6. Shipping over the air
+## 6. Modals must measure their own safe area
+
+A React Native `Modal` is a separate native root: `SafeAreaView` inside it
+reads every inset as 0 unless the Modal's content is wrapped in its own
+`SafeAreaProvider`. Without it, headers slide under the status bar and close
+buttons can't be tapped. Prefer `presentationStyle="pageSheet"` on iOS for
+full-height content so it can also be swiped away; a full-screen iOS modal
+with an unreachable close button traps the user. See
+`components/invoices/InvoicePreview.tsx`.
+
+## 7. Shipping over the air
 
 JS-only changes go out with `eas update`, and reach every installed build on
 the same runtime version. Code that imports a native module added in a later
