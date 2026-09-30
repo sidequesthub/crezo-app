@@ -108,11 +108,15 @@ export default function MediaKitScreen() {
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
+      // JPEG, not HEIC: the photo is shown on a public web page.
+      preferredAssetRepresentationMode:
+        ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
     });
     if (result.canceled || !result.assets?.[0]) return;
 
     await run(async () => {
-      const url = await uploadPhoto(result.assets[0].uri);
+      const asset = result.assets[0];
+      const url = await uploadPhoto(asset.uri, asset.mimeType);
       patch({ photoUrl: url });
     });
   }

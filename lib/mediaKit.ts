@@ -214,23 +214,26 @@ const PHOTO_BUCKET = 'media-kit';
  * restricted by RLS to the creator's own folder, so the path must start with
  * their creator id.
  */
-export async function uploadPhoto(localUri: string): Promise<string> {
+export async function uploadPhoto(localUri: string, mimeType?: string | null): Promise<string> {
   const creatorId = await getCreatorId();
   if (!creatorId) throw new Error('No creator profile for this account.');
 
-  const response = await fetch(localUri);
-  const blob = await response.blob();
-  if (blob.size > 5_000_000) {
+  // Raw bytes plus an explicit content type. Passing the fetched Blob made
+  // React Native send it as a multipart part typed text/plain, which the
+  // bucket (images only) rejected with invalid_mime_type.
+  const bytes = await (await fetch(localUri)).arrayBuffer();
+  if (bytes.byteLength > 5_000_000) {
     throw new Error('That image is over 5 MB. Pick a smaller one.');
   }
 
-  const ext = blob.type === 'image/png' ? 'png' : blob.type === 'image/webp' ? 'webp' : 'jpg';
+  const type = mimeType === 'image/png' || mimeType === 'image/webp' ? mimeType : 'image/jpeg';
+  const ext = type === 'image/png' ? 'png' : type === 'image/webp' ? 'webp' : 'jpg';
   // Overwrite a single path rather than accumulating orphans on every change.
   const path = `${creatorId}/photo.${ext}`;
 
   const { error } = await supabase.storage
     .from(PHOTO_BUCKET)
-    .upload(path, blob, { upsert: true, contentType: blob.type || 'image/jpeg' });
+    .upload(path, bytes, { upsert: true, contentType: type });
   if (error) throw new Error(error.message);
 
   const { data } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path);
