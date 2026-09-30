@@ -1,0 +1,20 @@
+# Pings production every 15 minutes. A failed run makes GitHub email the
+# account that last changed this schedule, which is the downtime alert.
+name: Uptime
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: API health (api.crezo.studio)
+        run: |
+          curl -fsS --retry 3 --retry-delay 10 --max-time 15 https://api.crezo.studio/health | grep -q '"status":"ok"'
+      - name: Website (crezo.studio)
+        run: |
+          curl -fsS --retry 3 --retry-delay 10 --max-time 15 -o /dev/null https://www.crezo.studio/
