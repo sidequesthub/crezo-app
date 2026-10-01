@@ -53,6 +53,15 @@ database). Follow them; don't restate them here.
 
 ## Hard rules
 
+**New data collection ships with its disclosures.** Any change that collects a
+new kind of data (analytics, crash reporting, purchases, phone number, location)
+or uses existing data for a new purpose must, in the same release: update the
+App Store **App Privacy** answers (App Store Connect, no review needed), update
+`../crezo-landing/app/privacy/page.tsx`, and tell users in the app where
+consent is needed (India's DPDP Act). Cross-app tracking additionally needs
+Apple's App Tracking Transparency prompt. Current answers:
+`docs/app-store-listing.md` → App Privacy.
+
 **Never commit secrets.** `.env`, `.mcp.json`, and `.claude/settings.local.json`
 are gitignored and each holds live credentials — the Supabase service-role key,
 the MSG91 auth key, a Google API key. Check `git diff --cached` before every
