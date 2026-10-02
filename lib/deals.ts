@@ -270,6 +270,30 @@ export async function listDeliverableOptions(creatorId: string): Promise<
   });
 }
 
+/**
+ * Open (not yet paid) deals, for linking a content post to a deal directly.
+ * A deal needs no deliverables to be linked; deliverables are optional detail.
+ */
+export async function listOpenDealOptions(creatorId: string): Promise<
+  { id: string; label: string; title: string }[]
+> {
+  const { data, error } = await supabase
+    .from('deals')
+    .select('id, title, brand:brands(name)')
+    .eq('creator_id', creatorId)
+    .in('status', OPEN_DEAL_STATUSES)
+    .order('created_at', { ascending: false })
+    .limit(200);
+
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((raw) => {
+    const r = raw as Record<string, unknown>;
+    const brand = firstOf(r.brand) as { name?: string } | null;
+    return { id: String(r.id), label: brand?.name ?? String(r.title ?? 'Deal'), title: String(r.title ?? '') };
+  });
+}
+
 export async function deleteDeliverable(id: string): Promise<void> {
   const { error } = await supabase.from('deliverables').delete().eq('id', id);
   if (error) throw new Error(error.message);

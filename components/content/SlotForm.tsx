@@ -26,7 +26,7 @@ import {
   type ContentStatus,
 } from '@/constants/content';
 import { type ContentSlotInput } from '@/lib/contentSlots';
-import { listDeliverableOptions } from '@/lib/deals';
+import { listDeliverableOptions, listOpenDealOptions } from '@/lib/deals';
 import { fromISODate, addDays, toISODate } from '@/lib/dates';
 
 interface Props {
@@ -40,6 +40,7 @@ interface Props {
 }
 
 type DeliverableOption = Awaited<ReturnType<typeof listDeliverableOptions>>[number];
+type DealOption = Awaited<ReturnType<typeof listOpenDealOptions>>[number];
 
 /** Accepts `9:30`, `09:30`, `21:05` — returns `HH:MM:00` or null if unparseable. */
 function parseTime(input: string): string | null {
@@ -72,6 +73,11 @@ export function SlotForm({
     initial.deliverable_id ?? null,
   );
 
+  // A post links to a deal; naming one of its deliverables is optional. Linking
+  // only through deliverables meant a new deal (which has none) couldn't be
+  // picked at all.
+  const [dealId, setDealId] = useState<string | null>(initial.deal_id ?? null);
+  const [deals, setDeals] = useState<DealOption[]>([]);
   const [deliverables, setDeliverables] = useState<DeliverableOption[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -82,13 +88,17 @@ export function SlotForm({
     listDeliverableOptions(creatorId)
       .then(setDeliverables)
       .catch(() => setDeliverables([]));
+    listOpenDealOptions(creatorId)
+      .then(setDeals)
+      .catch(() => setDeals([]));
   }, [creatorId]);
 
   const selectedDeliverable = deliverables.find((d) => d.id === deliverableId) ?? null;
+  const selectedDeal = deals.find((d) => d.id === (selectedDeliverable?.dealId ?? dealId)) ?? null;
 
-  /** Deliverables grouped under their deal, for the picker. */
-  const grouped = deliverables.reduce<Record<string, DeliverableOption[]>>((acc, d) => {
-    (acc[d.dealLabel] ??= []).push(d);
+  /** Each open deal with its deliverables, for the picker. */
+  const deliverablesByDeal = deliverables.reduce<Record<string, DeliverableOption[]>>((acc, d) => {
+    (acc[d.dealId] ??= []).push(d);
     return acc;
   }, {});
 
@@ -111,8 +121,8 @@ export function SlotForm({
         status,
         scheduled_date: date,
         scheduled_time: parseTime(time),
-        // The deal follows from the deliverable, so the two can't disagree.
-        deal_id: selectedDeliverable?.dealId ?? null,
+        // A chosen deliverable decides the deal, so the two can't disagree.
+        deal_id: selectedDeliverable?.dealId ?? dealId,
         deliverable_id: deliverableId,
         notes: notes.trim() || null,
       });
@@ -242,29 +252,29 @@ export function SlotForm({
             />
           </Field>
 
-          <Field label="Fulfils a deliverable — optional">
+          <Field label="Brand deal — optional">
             <Pressable
               onPress={() => setPickerOpen(true)}
               style={({ pressed }) => [styles.picker, pressed && styles.pickerPressed]}
             >
               <Ionicons
-                name={selectedDeliverable ? 'link' : 'link-outline'}
+                name={selectedDeal ? 'link' : 'link-outline'}
                 size={16}
-                color={selectedDeliverable ? Colors.secondaryFixed : Colors.onSurfaceVariant}
+                color={selectedDeal ? Colors.secondaryFixed : Colors.onSurfaceVariant}
               />
               <View style={styles.pickerBody}>
-                {selectedDeliverable ? (
+                {selectedDeal ? (
                   <>
                     <Text style={styles.pickerValue} numberOfLines={1}>
-                      {selectedDeliverable.title}
+                      {selectedDeal.label}
                     </Text>
-                    <Text style={styles.pickerSub}>{selectedDeliverable.dealLabel}</Text>
+                    <Text style={styles.pickerSub}>
+                      {selectedDeliverable ? selectedDeliverable.title : 'Whole deal'}
+                    </Text>
                   </>
                 ) : (
                   <Text style={styles.pickerPlaceholder}>
-                    {deliverables.length === 0
-                      ? 'No open deliverables — add some on a deal'
-                      : 'Not linked to a deal'}
+                    {deals.length === 0 ? 'No open deals yet' : 'Not linked to a deal'}
                   </Text>
                 )}
               </View>
@@ -319,11 +329,12 @@ export function SlotForm({
         <Pressable style={styles.backdrop} onPress={() => setPickerOpen(false)}>
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Link to a deliverable</Text>
+            <Text style={styles.sheetTitle}>Link to a brand deal</Text>
 
             <ScrollView style={{ maxHeight: 380 }} showsVerticalScrollIndicator={false}>
               <Pressable
                 onPress={() => {
+                  setDealId(null);
                   setDeliverableId(null);
                   setPickerOpen(false);
                 }}
@@ -331,15 +342,44 @@ export function SlotForm({
               >
                 <Ionicons name="close-circle-outline" size={18} color={Colors.onSurfaceVariant} />
                 <Text style={styles.optionText}>Not linked</Text>
-                {!deliverableId && (
+                {!selectedDeal && (
                   <Ionicons name="checkmark" size={18} color={Colors.primary} />
                 )}
               </Pressable>
 
-              {Object.entries(grouped).map(([dealLabel, items]) => (
-                <View key={dealLabel}>
-                  <Text style={styles.groupLabel}>{dealLabel.toUpperCase()}</Text>
-                  {items.map((d) => {
+              {deals.length === 0 && (
+                <Text style={styles.emptyHint}>
+                  Add a deal on the Deals tab to link posts to it.
+                </Text>
+              )}
+
+              {deals.map((deal) => {
+                const dealActive = !deliverableId && dealId === deal.id;
+                return (
+                <View key={deal.id}>
+                  <Text style={styles.groupLabel}>{deal.label.toUpperCase()}</Text>
+                  <Pressable
+                    onPress={() => {
+                      setDealId(deal.id);
+                      setDeliverableId(null);
+                      setPickerOpen(false);
+                    }}
+                    style={({ pressed }) => [
+                      styles.option,
+                      dealActive && styles.optionActive,
+                      pressed && !dealActive && styles.optionPressed,
+                    ]}
+                  >
+                    <Ionicons name="briefcase-outline" size={16} color={Colors.primary} />
+                    <View style={styles.optionBody}>
+                      <Text style={styles.optionText} numberOfLines={1}>
+                        {deal.title || deal.label}
+                      </Text>
+                      <Text style={styles.optionSub}>Whole deal</Text>
+                    </View>
+                    {dealActive && <Ionicons name="checkmark" size={18} color={Colors.primary} />}
+                  </Pressable>
+                  {(deliverablesByDeal[deal.id] ?? []).map((d) => {
                     const meta = platformMeta(d.platform);
                     const active = d.id === deliverableId;
                     return (
@@ -347,6 +387,7 @@ export function SlotForm({
                         key={d.id}
                         onPress={() => {
                           setDeliverableId(d.id);
+                          setDealId(d.dealId);
                           setPickerOpen(false);
                         }}
                         style={({ pressed }) => [
@@ -375,13 +416,8 @@ export function SlotForm({
                     );
                   })}
                 </View>
-              ))}
-
-              {deliverables.length === 0 && (
-                <Text style={styles.emptyHint}>
-                  Deliverables come from your deals. Open a deal and add some first.
-                </Text>
-              )}
+                );
+              })}
             </ScrollView>
           </Pressable>
         </Pressable>
