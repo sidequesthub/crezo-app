@@ -226,14 +226,15 @@ export default function InvoiceDetailScreen() {
         await updateInvoice(id, values, supplierState);
         await load();
       }}
-      extra={
+      extra={(save) => (
         <View style={styles.actions}>
           <View style={styles.buttonRow}>
-            <Pressable onPress={() => setPreviewOpen(true)} style={({ pressed }) => [styles.secondary, pressed && { opacity: 0.85 }]}>
+            {/* Both save first, so the PDF and the issued invoice match what is on screen. */}
+            <Pressable onPress={async () => { if (await save()) setPreviewOpen(true); }} style={({ pressed }) => [styles.secondary, pressed && { opacity: 0.85 }]}>
               <Ionicons name="eye-outline" size={18} color={Colors.primary} />
               <Text style={styles.secondaryText}>Preview</Text>
             </Pressable>
-            <Pressable onPress={confirmIssue} style={({ pressed }) => [styles.issue, pressed && { opacity: 0.85 }]}>
+            <Pressable onPress={async () => { if (await save()) confirmIssue(); }} style={({ pressed }) => [styles.issue, pressed && { opacity: 0.85 }]}>
               <Ionicons name="checkmark-circle-outline" size={18} color={Colors.onPrimaryContainer} />
               <Text style={styles.issueText}>Issue invoice</Text>
             </Pressable>
@@ -243,7 +244,7 @@ export default function InvoiceDetailScreen() {
             number in your {new Date().getMonth() >= 3 ? 'current' : ''} financial-year series and locks the invoice.
           </Text>
         </View>
-      }
+      )}
       after={preview}
     />
   );

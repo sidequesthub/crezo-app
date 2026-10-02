@@ -14,8 +14,9 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter, useFocusEffect } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
-import { TAB_BAR_HEIGHT, FLOATING_GAP, MIN_BOTTOM_INSET } from '@/constants/Layout';
+import { TAB_BAR_HEIGHT, FLOATING_GAP, MIN_BOTTOM_INSET, FAB_SIZE } from '@/constants/Layout';
 import { MediaGrid } from '@/components/vault/MediaGrid';
+import { FloatingActionButton } from '@/components/ui/FloatingActionButton';
 import {
   getPermission,
   requestPermission,
@@ -179,7 +180,14 @@ export default function VaultScreen() {
     if (!creatorId.current || !name.trim()) return;
     try {
       const folder = await createFolder(creatorId.current, name);
-      await moveToFolder(folder);
+      if (selection.size > 0) {
+        await moveToFolder(folder);
+        return;
+      }
+      // Created from the Folders tab: nothing to add yet, so open it.
+      setSheetOpen(false);
+      await loadFolders();
+      router.push(`/vault/${folder.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not create folder');
     }
@@ -254,7 +262,8 @@ export default function VaultScreen() {
           <FoldersTab
             folders={folders}
             loading={loadingFolders}
-            bottomInset={bottomInset}
+            // Clear of the New folder button so the last row stays tappable.
+            bottomInset={bottomInset + FAB_SIZE + FLOATING_GAP}
             onOpen={(f) => router.push(`/vault/${f.id}`)}
             onCreate={() => setSheetOpen(true)}
           />
@@ -314,6 +323,14 @@ export default function VaultScreen() {
             )}
           </Pressable>
         </View>
+      )}
+
+      {tab === 'folders' && !loadingFolders && (
+        <FloatingActionButton
+          bottom={bottomInset}
+          accessibilityLabel="New folder"
+          onPress={() => setSheetOpen(true)}
+        />
       )}
 
       <FolderSheet
@@ -514,8 +531,9 @@ function FolderSheet({
             </Pressable>
           </View>
 
+          {/* Existing folders are targets only when there is something to add. */}
           <ScrollView style={{ maxHeight: 320 }} showsVerticalScrollIndicator={false}>
-            {folders.map((f) => (
+            {selecting && folders.map((f) => (
               <Pressable
                 key={f.id}
                 onPress={() => onPick(f)}

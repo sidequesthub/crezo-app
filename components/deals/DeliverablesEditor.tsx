@@ -23,7 +23,8 @@ const SHORT_LABEL: Record<ContentPlatform, string> = {
 };
 
 interface Props {
-  dealId: string;
+  /** Null while the deal is being created: edits stay local until it is saved. */
+  dealId: string | null;
   items: Deliverable[];
   onChanged: (next: Deliverable[]) => void;
 }
@@ -47,7 +48,9 @@ export function DeliverablesEditor({ dealId, items, onChanged }: Props) {
     if (!title || busy) return;
     setBusy(true);
     try {
-      const created = await addDeliverable(dealId, title, platform, due);
+      const created = dealId
+        ? await addDeliverable(dealId, title, platform, due)
+        : { id: `draft-${Date.now()}`, deal_id: '', title, platform, due_date: due, status: 'pending' };
       onChanged([...items, created]);
       setDraft('');
       setDue(null);
@@ -60,6 +63,7 @@ export function DeliverablesEditor({ dealId, items, onChanged }: Props) {
     const next = d.status === 'done' ? 'pending' : 'done';
     const optimistic = items.map((x) => (x.id === d.id ? { ...x, status: next } : x));
     onChanged(optimistic);
+    if (!dealId) return;
     try {
       await setDeliverableStatus(d.id, next);
     } catch {
@@ -69,6 +73,7 @@ export function DeliverablesEditor({ dealId, items, onChanged }: Props) {
 
   async function remove(d: Deliverable) {
     onChanged(items.filter((x) => x.id !== d.id));
+    if (!dealId) return;
     try {
       await deleteDeliverable(d.id);
     } catch {
@@ -78,6 +83,7 @@ export function DeliverablesEditor({ dealId, items, onChanged }: Props) {
 
   async function setRowDue(d: Deliverable, next: string | null) {
     onChanged(items.map((x) => (x.id === d.id ? { ...x, due_date: next } : x)));
+    if (!dealId) return;
     try {
       await updateDeliverable(d.id, { due_date: next });
     } catch {

@@ -32,8 +32,9 @@ No demo account is needed. On the first screen, tap "Continue with Apple" (or
 - Calendar tab: tap + to plan a post and link it to a deal.
 - Profile > Media kit: add platforms and rates, publish, and tap the link to
   open the public page.
-- Vault tab: grant photo access to group existing photos into folders. Media
-  is never uploaded; Crezo stores only a reference to each item.
+- Vault tab: tap + to create a folder, then grant photo access and add
+  existing photos to it. Media is never uploaded; Crezo stores only a
+  reference to each item.
 - Account deletion: Profile > Privacy & security > Delete my account.
 No sample files are required.
 

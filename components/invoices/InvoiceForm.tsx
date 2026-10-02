@@ -40,7 +40,12 @@ interface Props {
   onSubmit: (values: InvoiceInput) => Promise<void>;
   onDelete?: () => void;
   onClose: () => void;
-  extra?: React.ReactNode;
+  /**
+   * Extra actions below the totals. As a function it receives `save`, which
+   * validates and saves the current edits and resolves to whether that worked,
+   * so actions like Preview or Issue never act on a stale copy.
+   */
+  extra?: React.ReactNode | ((save: () => Promise<boolean>) => React.ReactNode);
   /** Rendered outside the form — for modals that must sit above it. */
   after?: React.ReactNode;
 }
@@ -104,12 +109,16 @@ export function InvoiceForm({
     setItems((prev) => prev.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
   }
 
-  async function handleSubmit() {
+  async function handleSubmit(): Promise<boolean> {
     const valid = items.filter((i) => i.description.trim() && i.rate > 0);
-    if (!brandId) return setError('Choose which brand this invoice is for.');
-    if (valid.length === 0) return setError('Add at least one line item with a description and amount.');
+    const fail = (message: string) => {
+      setError(message);
+      return false;
+    };
+    if (!brandId) return fail('Choose which brand this invoice is for.');
+    if (valid.length === 0) return fail('Add at least one line item with a description and amount.');
     if (applyGst && !creator?.gst_number) {
-      return setError('Add your GSTIN under Profile → Payment & GST before charging GST.');
+      return fail('Add your GSTIN under Profile → Payment & GST before charging GST.');
     }
 
     setSaving(true);
@@ -126,8 +135,11 @@ export function InvoiceForm({
         sac_code: sacCode.trim() || '998363',
         notes: notes.trim() || null,
       });
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save');
+      return false;
+    } finally {
       setSaving(false);
     }
   }
@@ -325,7 +337,7 @@ export function InvoiceForm({
             </View>
           </View>
 
-          {extra}
+          {typeof extra === 'function' ? extra(handleSubmit) : extra}
 
           {error && (
             <View style={styles.errorBox}>
