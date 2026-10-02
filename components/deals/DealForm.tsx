@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
+import { Field } from '@/components/ui/FormField';
 import { Type } from '@/constants/Typography';
 import { DateField } from '@/components/ui/DateField';
 import { DEAL_STATUS_ORDER, DEAL_STATUSES, type DealStatus } from '@/constants/deals';
@@ -190,13 +191,13 @@ export function DealForm({
             </View>
           </Field>
 
-          <Field label="Due date — optional">
+          <Field label="Due date" optional>
             <DateField value={endDate} onChange={setEndDate} placeholder="Set a due date" />
           </Field>
 
           {children}
 
-          <Field label="Usage rights — optional">
+          <Field label="Usage rights" optional>
             <TextInput
               value={usageRights}
               onChangeText={setUsageRights}
@@ -206,7 +207,7 @@ export function DealForm({
             />
           </Field>
 
-          <Field label="Notes — optional">
+          <Field label="Notes" optional>
             <TextInput
               value={notes}
               onChangeText={setNotes}
@@ -247,14 +248,6 @@ export function DealForm({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      {children}
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.surface },
@@ -274,14 +267,6 @@ const styles = StyleSheet.create({
   },
 
   body: { padding: 20, paddingBottom: 32, gap: 24 },
-  field: { gap: 10 },
-  fieldLabel: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 12,
-    color: Colors.onSurfaceVariant,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
   input: {
     backgroundColor: Colors.surfaceContainerLow,
     borderRadius: 14,

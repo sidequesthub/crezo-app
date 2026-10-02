@@ -139,7 +139,7 @@ export default function MediaKitScreen() {
     return (
       <SettingsScreen
         title="Media kit"
-        subtitle="A public page brands can open — your platforms, the brands you've worked with, and how to reach you."
+        subtitle="A public page brands can open, with your platforms, the brands you've worked with, and how to reach you."
       >
         <Section>
           <View style={styles.intro}>
@@ -207,7 +207,7 @@ export default function MediaKitScreen() {
           value={slugDraft}
           onChangeText={(v) => setSlugDraft(v.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
           autoCapitalize="none"
-          hint="crezo.studio/your-name — 3 to 40 letters, numbers or hyphens."
+          hint="crezo.studio/your-name. Use 3 to 40 letters, numbers or hyphens."
         />
       </Section>
 
@@ -282,7 +282,7 @@ export default function MediaKitScreen() {
           );
         })}
         <ActionRow icon="add-circle-outline" label="Add a platform"
-          description="Audience numbers are typed in by hand — Crezo doesn't read them from your platforms."
+          description="Audience numbers are typed in by hand. Crezo doesn't read them from your platforms."
           onPress={addPlatform} tint={Colors.primary} />
       </Section>
 

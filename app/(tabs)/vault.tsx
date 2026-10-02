@@ -167,7 +167,7 @@ export default function VaultScreen() {
       const message = e instanceof Error ? e.message : 'Could not add to folder';
       setError(
         /network|fetch/i.test(message)
-          ? 'Network dropped while saving. Your selection is still here — tap again to retry.'
+          ? 'Network dropped while saving. Your selection is still here. Tap again to retry.'
           : message,
       );
     } finally {
@@ -199,7 +199,7 @@ export default function VaultScreen() {
           <View style={styles.headerLeft}>
             <Text style={styles.title}>Asset Vault</Text>
             <Text style={styles.subtitle}>
-              Organise your media — nothing leaves your phone
+              Organise your media. Nothing leaves your phone
             </Text>
           </View>
           {selectionMode && (
@@ -360,7 +360,7 @@ function FoldersTab({
         <Empty
           icon="folder-open-outline"
           title="No folders yet"
-          body="Group clips by campaign. Folders live in Crezo — your photos never move."
+          body="Group clips by campaign. Folders live in Crezo; your photos never move."
           ctaLabel="Create a folder"
           onPress={onCreate}
         />
@@ -443,7 +443,7 @@ function PermissionGate({ state, onAsk }: { state: PermissionState; onAsk: () =>
       </Text>
       <Text style={styles.gateBody}>
         Crezo reads your library so you can group clips into folders. It never uploads,
-        moves, or deletes anything — access is read-only.
+        moves, or deletes anything. Access is read-only.
       </Text>
       {!denied && (
         <Pressable onPress={onAsk} style={({ pressed }) => [styles.gateCta, pressed && { opacity: 0.85 }]}>

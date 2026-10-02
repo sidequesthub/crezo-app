@@ -129,7 +129,7 @@ async function planPayments(creatorId: string, now: Date): Promise<Planned[]> {
       planned.push({
         at: overdue,
         title: 'Payment overdue',
-        body: `${who} hasn’t paid ${amount} — ${OVERDUE_AFTER_DAYS} days past due`,
+        body: `${who} hasn’t paid ${amount}, now ${OVERDUE_AFTER_DAYS} days past due`,
         url,
       });
     }

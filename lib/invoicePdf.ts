@@ -16,7 +16,7 @@ const money = (n: number) =>
   n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const dateLabel = (iso: string | null) => {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const [y, m, d] = iso.split('-').map(Number);
   return new Date(y, m - 1, d).toLocaleDateString('en-IN', {
     day: '2-digit',
@@ -130,7 +130,7 @@ export function invoiceHtml(invoice: Invoice, creator: CreatorProfile): string {
     </div>
     <div class="party">
       <h3>Bill to</h3>
-      <div class="nm">${esc(invoice.brand?.name ?? '—')}</div>
+      <div class="nm">${esc(invoice.brand?.name ?? 'Not set')}</div>
       ${invoice.brand?.address ? `<div>${esc(invoice.brand.address).replace(/\n/g, '<br/>')}</div>` : ''}
       ${invoice.brand?.email ? `<div>${esc(invoice.brand.email)}</div>` : ''}
       ${invoice.brand?.gstin ? `<div><strong>GSTIN:</strong> ${esc(invoice.brand.gstin)}</div>` : ''}
@@ -194,7 +194,7 @@ export function invoiceHtml(invoice: Invoice, creator: CreatorProfile): string {
         ? hasGst
           ? 'This is a computer-generated tax invoice.'
           : 'This is a computer-generated invoice.'
-        : 'Proforma only — not a tax invoice. A tax invoice with a number follows on issue.'
+        : 'Proforma only, not a tax invoice. A tax invoice with a number follows on issue.'
     }</span>
     <span>Made with Crezo</span>
   </div>

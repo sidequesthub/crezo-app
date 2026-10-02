@@ -54,7 +54,7 @@ export function IssuedInvoiceView({
           />
           <Text style={[styles.lockText, cancelled && { color: Colors.error }]}>
             {cancelled
-              ? `Cancelled${invoice.cancellation_reason ? ` — ${invoice.cancellation_reason}` : ''}. Its number stays reserved so the series has no gaps.`
+              ? `Cancelled${invoice.cancellation_reason ? `: ${invoice.cancellation_reason}` : ''}. Its number stays reserved so the series has no gaps.`
               : 'Issued invoices can’t be edited. To correct one, cancel it and issue a replacement.'}
           </Text>
         </View>
@@ -75,7 +75,7 @@ export function IssuedInvoiceView({
           {invoice.place_of_supply && (
             <Row label="Place of supply" value={`${stateName(invoice.place_of_supply)} (${invoice.place_of_supply})`} />
           )}
-          {invoice.gst_amount > 0 && <Row label="SAC code" value={invoice.sac_code ?? '—'} />}
+          {invoice.gst_amount > 0 && <Row label="SAC code" value={invoice.sac_code ?? 'Not set'} />}
         </Section>
 
         <Section label={`Line items (${invoice.line_items.length})`}>

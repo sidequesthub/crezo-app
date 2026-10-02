@@ -88,7 +88,7 @@ export function DeliverablesEditor({ dealId, items, onChanged }: Props) {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionLabel}>
-        Deliverables{items.length > 0 ? ` — ${done}/${items.length} done` : ''}
+        Deliverables{items.length > 0 ? ` (${done}/${items.length} done)` : ''}
       </Text>
 
       {items.map((d) => {
@@ -152,7 +152,7 @@ export function DeliverablesEditor({ dealId, items, onChanged }: Props) {
         <TextInput
           value={draft}
           onChangeText={setDraft}
-          placeholder="e.g. 1 Reel — product unboxing"
+          placeholder="e.g. 1 Reel, product unboxing"
           placeholderTextColor="rgba(193, 198, 215, 0.4)"
           style={styles.addInput}
           onSubmitEditing={add}

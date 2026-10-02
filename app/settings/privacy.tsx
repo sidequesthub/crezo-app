@@ -52,7 +52,7 @@ export default function PrivacyScreen() {
   function confirmDelete() {
     Alert.alert(
       'Delete your account?',
-      `This permanently removes your account and every record — ${stats.deals} deals, ${stats.content} content items, ${stats.folders} vault folders. Photos on your phone are untouched. This cannot be undone.`,
+      `This permanently removes your account and every record (${stats.deals} deals, ${stats.content} content items, ${stats.folders} vault folders). Photos on your phone are untouched. This cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -90,7 +90,7 @@ export default function PrivacyScreen() {
         month: 'long',
         year: 'numeric',
       })
-    : '—';
+    : 'Not available';
 
   return (
     <SettingsScreen
@@ -101,7 +101,7 @@ export default function PrivacyScreen() {
         <InfoRow
           icon={account?.icon ?? 'mail-outline'}
           label="Signed in as"
-          value={account?.value ?? profile?.email ?? '—'}
+          value={account?.value ?? profile?.email ?? 'Not available'}
         />
         <InfoRow icon="time-outline" label="Member since" value={memberSince} />
         <InfoRow
@@ -116,7 +116,7 @@ export default function PrivacyScreen() {
           <Explain
             icon="images-outline"
             title="Your photos never leave your phone"
-            body="The vault stores only a reference to each item — an id — never the file. Crezo has no copy of your media."
+            body="The vault stores only a reference (an id) to each item, never the file. Crezo has no copy of your media."
           />
           <Explain
             icon="lock-closed-outline"

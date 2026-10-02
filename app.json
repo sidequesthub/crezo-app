@@ -39,7 +39,7 @@
       [
         "expo-media-library",
         {
-          "photosPermission": "Crezo shows your camera roll so you can organise clips into folders. Your media stays on your device — Crezo never uploads or moves it.",
+          "photosPermission": "Crezo shows your camera roll so you can organise clips into folders. Your media stays on your device. Crezo never uploads or moves it.",
           "savePhotosPermission": "Crezo needs this only if you choose to export a folder as an album in your Photos app.",
           "isAccessMediaLocationEnabled": true
         }

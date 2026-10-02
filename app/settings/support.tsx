@@ -56,7 +56,7 @@ export default function SupportScreen() {
           onPress={() =>
             open(
               `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
-                `Bug report — Crezo ${version}`,
+                `Bug report: Crezo ${version}`,
               )}&body=${encodeURIComponent(
                 `\n\n---\nApp version: ${version}\nExpo SDK: ${runtime}\n`,
               )}`,
@@ -78,7 +78,7 @@ export default function SupportScreen() {
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>
-          Built for Indian creators. Rupees, GST, and UPI — not an afterthought.
+          Built for Indian creators. Rupees, GST and UPI are built in, not an afterthought.
         </Text>
       </View>
     </SettingsScreen>

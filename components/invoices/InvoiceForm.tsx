@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
+import { Field } from '@/components/ui/FormField';
 import { Type } from '@/constants/Typography';
 import {
   calculateTax, stateCodeFromGstin, stateName, STATE_OPTIONS,
@@ -86,7 +87,7 @@ export function InvoiceForm({
       'Do you need GST?',
       'Registration is generally required once your turnover crosses ₹20 lakh ' +
         '(₹10 lakh in some states). Below that, most creators are not registered ' +
-        'and invoice without GST — which is perfectly valid.\n\n' +
+        'and invoice without GST, which is perfectly valid.\n\n' +
         'If you are registered, add your GSTIN under Payment & GST and this ' +
         'switch becomes available.\n\n' +
         'Thresholds and rates change. Confirm with your CA before relying on this.',
@@ -160,7 +161,7 @@ export function InvoiceForm({
                   </>
                 ) : (
                   <Text style={styles.pickerPlaceholder}>
-                    {brands.length === 0 ? 'No brands yet — add a deal first' : 'Choose a brand'}
+                    {brands.length === 0 ? 'No brands yet. Add a deal first' : 'Choose a brand'}
                   </Text>
                 )}
               </View>
@@ -182,7 +183,7 @@ export function InvoiceForm({
                 <TextInput
                   value={item.description}
                   onChangeText={(v) => setItem(i, { description: v })}
-                  placeholder="e.g. Instagram Reel — product launch"
+                  placeholder="e.g. Instagram Reel for a product launch"
                   placeholderTextColor="rgba(193, 198, 215, 0.4)"
                   style={styles.itemInput}
                 />
@@ -239,7 +240,7 @@ export function InvoiceForm({
                   // step — most creators under the threshold never register.
                   <Pressable onPress={() => router.push('/settings/payment')}>
                     <Text style={styles.gstHint}>
-                      Not registered for GST — invoice without it, or{' '}
+                      Not registered for GST? Invoice without it, or{' '}
                       <Text style={styles.gstLink}>add your GSTIN</Text>
                     </Text>
                   </Pressable>
@@ -263,7 +264,7 @@ export function InvoiceForm({
                       {placeOfSupply ? `${stateName(placeOfSupply)} (${placeOfSupply})` : 'Place of supply'}
                     </Text>
                     <Text style={styles.pickerSub}>
-                      {totals.intraState ? 'CGST + SGST — same state' : 'IGST — different state'}
+                      {totals.intraState ? 'CGST + SGST (same state)' : 'IGST (different state)'}
                     </Text>
                   </View>
                   <Ionicons name="chevron-down" size={16} color={Colors.onSurfaceVariant} />
@@ -301,7 +302,7 @@ export function InvoiceForm({
             )}
           </Field>
 
-          <Field label="Notes — optional">
+          <Field label="Notes" optional>
             <TextInput
               value={notes}
               onChangeText={setNotes}
@@ -424,14 +425,6 @@ function PickerSheet({ visible, title, options, selected, onPick, onClose }: {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      {children}
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.surface },
@@ -440,8 +433,6 @@ const styles = StyleSheet.create({
   iconButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   heading: { fontFamily: 'PlusJakartaSans_700Bold', fontSize: 17, color: Colors.onSurface },
   body: { padding: 20, paddingBottom: 32, gap: 22 },
-  field: { gap: 10 },
-  fieldLabel: { fontFamily: 'Manrope_600SemiBold', fontSize: 12, color: Colors.onSurfaceVariant, letterSpacing: 0.5, textTransform: 'uppercase' },
 
   picker: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: Colors.surfaceContainerLow, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13 },
   pickerPressed: { backgroundColor: Colors.surfaceContainerHigh },

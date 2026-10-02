@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
+import { Field } from '@/components/ui/FormField';
 import { Type } from '@/constants/Typography';
 import {
   PLATFORM_ORDER,
@@ -245,14 +246,14 @@ export function SlotForm({
             <TextInput
               value={time}
               onChangeText={setTime}
-              placeholder="Time — optional, e.g. 18:30"
+              placeholder="Time (optional), e.g. 18:30"
               placeholderTextColor="rgba(193, 198, 215, 0.4)"
               style={[styles.input, styles.inputSpaced]}
               keyboardType="numbers-and-punctuation"
             />
           </Field>
 
-          <Field label="Brand deal — optional">
+          <Field label="Brand deal" optional>
             <Pressable
               onPress={() => setPickerOpen(true)}
               style={({ pressed }) => [styles.picker, pressed && styles.pickerPressed]}
@@ -282,7 +283,7 @@ export function SlotForm({
             </Pressable>
           </Field>
 
-          <Field label="Notes — optional">
+          <Field label="Notes" optional>
             <TextInput
               value={notes}
               onChangeText={setNotes}
@@ -426,14 +427,6 @@ export function SlotForm({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      {children}
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.surface },
@@ -453,14 +446,6 @@ const styles = StyleSheet.create({
   },
 
   body: { padding: 20, paddingBottom: 32, gap: 24 },
-  field: { gap: 10 },
-  fieldLabel: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 12,
-    color: Colors.onSurfaceVariant,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
   input: {
     backgroundColor: Colors.surfaceContainerLow,
     borderRadius: 14,
