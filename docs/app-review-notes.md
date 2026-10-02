@@ -8,9 +8,7 @@ Notes. Keep it current with each submission.
 **1. Screen recording**
 
 Attached: a recording on a physical iPhone running the latest iOS. It starts at
-app launch and shows sign-up with Google Sign-In, the main features
-(brand deals, GST invoice and PDF preview, content calendar, media kit, media
-vault), and account deletion (Profile > Privacy & security > Delete my
+app launch and shows sign-up with Google Sign-In, the main features (a brand deal with deliverables, the content calendar, a media vault folder, and publishing a media kit page), and account deletion (Profile > Privacy & security > Delete my
 account).
 
 **2. Purpose and audience**
