@@ -60,3 +60,8 @@ does not provide third-party protected content. Creators only see their own
 data. Media kit pages contain only what the creator publishes about
 themselves; there is no feed, messaging or browsing of other users' content
 in the app.
+
+
+**7. Business model (Guideline 2.1(b))**
+
+Crezo 1.0.1 has no paid content, subscriptions or features, and no purchase flow. Every feature is free for every user. The "Early access" card on the Profile tab tells users that features which may later become part of a paid "Pro" plan are free for now. Nothing is sold in the app, on crezo.studio or elsewhere, and there are no enterprise, family or group sales. If a paid plan is introduced later, it will use In-App Purchase and be submitted for review first.
