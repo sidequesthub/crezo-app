@@ -302,3 +302,7 @@ notifications, both explicitly Phase-1 items in the spec.
 
 Don't describe unbuilt screens as working, and don't let a stub's existence
 imply the feature ships.
+
+## App Store
+
+Before any App Store submission, go through `docs/app-store-checklist.md`.

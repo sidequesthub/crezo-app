@@ -5,63 +5,46 @@ Notes. Keep it current with each submission.
 
 ---
 
-**1. Screen recording**
+1. Screen recording
 
-Attached: a recording on a physical iPhone running the latest iOS. It starts at
-app launch and shows sign-up with Google Sign-In, the main features (a brand deal with deliverables, the content calendar, a media vault folder, and publishing a media kit page), and account deletion (Profile > Privacy & security > Delete my
-account).
+Attached: a recording on a physical iPhone running the latest iOS. It starts at app launch and shows sign-up with Google Sign-In, the main features (a brand deal with deliverables, the content calendar, a media vault folder, and publishing a media kit page), and account deletion (Profile > Privacy & security > Delete my account).
 
-**2. Purpose and audience**
+2. Purpose and audience
 
-Crezo is a business app for independent content creators in India
-(Instagram creators, YouTubers and similar). Creators earn from brand
-collaborations but usually manage them in chats, notes and spreadsheets.
-Crezo keeps the business side in one place: tracking each brand deal from
-lead to paid, planning the posts they owe, creating GST-compliant invoices
-as PDFs, sharing a media kit link with brands, and sorting their own camera
-roll into folders per brand deal. All features are free during early access.
+Crezo is a business app for independent content creators in India (Instagram creators, YouTubers and similar). Creators earn from brand collaborations but usually manage them in chats, notes and spreadsheets. Crezo keeps the business side in one place: tracking each brand deal from lead to paid, planning the posts they owe, creating GST-compliant invoices as PDFs, sharing a media kit link with brands, and sorting their own camera roll into folders per brand deal. All features are free during early access.
 
-**3. Setup and access**
+3. Setup and access
 
-No demo account is needed. On the first screen, tap "Continue with Apple" (or
-"Continue with Google") to create an account. A new account starts empty:
+No demo account is needed. On the first screen, tap "Continue with Apple" (or "Continue with Google") to create an account. A new account starts empty:
 - Deals tab: tap + to add a deal (brand, value, status, deliverables).
 - Profile > Invoices, or a deal: create an invoice and tap Preview to see the PDF.
 - Calendar tab: tap + to plan a post and link it to a deal.
-- Profile > Media kit: add platforms and rates, publish, and tap the link to
-  open the public page.
-- Vault tab: tap + to create a folder, then grant photo access and add
-  existing photos to it. Media is never uploaded; Crezo stores only a
-  reference to each item.
-- Account deletion: Profile > Privacy & security > Delete my account.
-No sample files are required.
+- Profile > Media kit: add platforms and rates, publish, and tap the link to open the public page.
+- Vault tab: tap + to create a folder, then grant photo access and add existing photos to it. Media is never uploaded; Crezo stores only a reference to each item.
+- Account deletion: Profile > Privacy & security > Delete my account. No sample files are required.
 
-**4. External services**
+4. External services
 
-- Supabase: database, authentication and file storage (profile and media kit
-  photos).
+- Supabase: database, authentication and file storage (profile and media kit photos).
 - Sign in with Apple and Google Sign-In: authentication.
 - Vercel: hosts crezo.studio, including each creator's public media kit page.
-- Expo (EAS): builds and app updates.
-No payment processors, data providers, advertising, analytics or AI services
-are used. The app contains no purchases.
+- Expo (EAS): builds and app updates. No payment processors, data providers, advertising, analytics or AI services are used. The app contains no purchases.
 
-**5. Regional differences**
+5. Regional differences
 
-The app is available in India only and behaves the same for every user.
-Amounts are in Indian rupees and invoices follow Indian GST rules (CGST/SGST
-or IGST at 18%, optional for creators who are not GST-registered).
+The app is available in India only and behaves the same for every user. Amounts are in Indian rupees and invoices follow Indian GST rules (CGST/SGST or IGST at 18%, optional for creators who are not GST-registered).
 
-**6. Regulated industry or third-party material**
+6. Regulated industry or third-party material
 
-Not applicable. Crezo helps creators prepare their own invoices and records;
-it does not process payments, file taxes or give financial advice, and it
-does not provide third-party protected content. Creators only see their own
-data. Media kit pages contain only what the creator publishes about
-themselves; there is no feed, messaging or browsing of other users' content
-in the app.
+Not applicable. Crezo helps creators prepare their own invoices and records; it does not process payments, file taxes or give financial advice, and it does not provide third-party protected content. Creators only see their own data. Media kit pages contain only what the creator publishes about themselves; there is no feed, messaging or browsing of other users' content in the app.
 
+7. Business model (Guideline 2.1(b))
 
-**7. Business model (Guideline 2.1(b))**
+Crezo 1.0.1 has no paid content, subscriptions or features, and no purchase flow. Every feature is free for every user. Nothing is sold in the app, on crezo.studio or elsewhere, and there are no enterprise, family or group sales. If a paid plan is introduced later, it will use In-App Purchase and be submitted for review first.
 
-Crezo 1.0.1 has no paid content, subscriptions or features, and no purchase flow. Every feature is free for every user. The "Early access" card on the Profile tab tells users that features which may later become part of a paid "Pro" plan are free for now. Nothing is sold in the app, on crezo.studio or elsewhere, and there are no enterprise, family or group sales. If a paid plan is introduced later, it will use In-App Purchase and be submitted for review first.
+8. Changes in build 22 (Guideline 5.1.1)
+
+- Vault: the screen shown before the photo library permission request now has a "Continue" button; the choice is made only in the system prompt. If access was denied, the screen offers "Open Settings".
+- The app no longer declares camera, microphone or add-to-Photos access, which it never used. The only permission it asks for is read access to the photo library, for the Vault.
+- The media kit photo is picked with the system photo picker, without a photo library permission request.
+- The Profile card now reads "Free: every feature in Crezo is free for you right now."
