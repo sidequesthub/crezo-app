@@ -105,11 +105,8 @@ export default function ProfileScreen() {
 
         {earlyAccess && (
           <View style={styles.earlyAccess}>
-            <Text style={styles.earlyAccessLabel}>Early access</Text>
-            <Text style={styles.earlyAccessBody}>
-              Pro is free during early access. Early members keep it free for 3 months after paid
-              plans launch.
-            </Text>
+            <Text style={styles.earlyAccessLabel}>Free</Text>
+            <Text style={styles.earlyAccessBody}>Every feature in Crezo is free for you right now.</Text>
           </View>
         )}
 

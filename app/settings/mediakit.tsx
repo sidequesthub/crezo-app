@@ -99,11 +99,8 @@ export default function MediaKitScreen() {
   }
 
   async function pickPhoto() {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
-      setError('Photo access is needed to pick an image.');
-      return;
-    }
+    // No permission request: the system photo picker runs out of process and
+    // hands back only the photo the user picks (App Review 5.1.1(iii)).
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
