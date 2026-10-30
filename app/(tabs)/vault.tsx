@@ -9,6 +9,7 @@ import {
   Modal,
   TextInput,
   Alert,
+  Linking,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -462,15 +463,24 @@ function PermissionGate({ state, onAsk }: { state: PermissionState; onAsk: () =>
         Crezo reads your library so you can group clips into folders. It never uploads,
         moves, or deletes anything. Access is read-only.
       </Text>
+      {/* App Review 5.1.1(iv): a screen before the system prompt may explain,
+          but its button must read "Continue", never "Allow". The choice is
+          made in the system prompt itself. */}
       {!denied && (
         <Pressable onPress={onAsk} style={({ pressed }) => [styles.gateCta, pressed && { opacity: 0.85 }]}>
-          <Text style={styles.gateCtaText}>Allow access</Text>
+          <Text style={styles.gateCtaText}>Continue</Text>
         </Pressable>
       )}
       {denied && (
-        <Text style={styles.gateHint}>
-          Enable it in Settings → Privacy → Photos.
-        </Text>
+        <>
+          <Pressable
+            onPress={() => Linking.openSettings()}
+            style={({ pressed }) => [styles.gateCta, pressed && { opacity: 0.85 }]}
+          >
+            <Text style={styles.gateCtaText}>Open Settings</Text>
+          </Pressable>
+          <Text style={styles.gateHint}>Turn on Photos for Crezo to use the vault.</Text>
+        </>
       )}
     </View>
   );
